@@ -2418,17 +2418,17 @@
           "image_url": {
             "type": "string",
             "format": "uri",
-            "description": "URL of the image to publish (for IMAGE media)"
+            "description": "Path to the image. Instagram will cURL your image using this URL so it must be hosted on a public server. JPEG is the only supported format."
           },
           "video_url": {
             "type": "string",
             "format": "uri",
-            "description": "URL of the video to publish (for VIDEO, REELS, STORIES media)"
+            "description": "Path to the video. Instagram will cURL your video using this URL so it must be hosted on a public server. Set media_type to VIDEO, REELS, or STORIES."
           },
           "media_type": {
             "type": "string",
-            "enum": ["IMAGE", "VIDEO", "REELS", "STORIES", "CAROUSEL"],
-            "description": "Type of media to create. Required for VIDEO, REELS, STORIES, and CAROUSEL"
+            "enum": ["VIDEO", "REELS", "STORIES", "CAROUSEL"],
+            "description": "If the container will be for a video, set to VIDEO, REELS, or STORIES. For carousels, set to CAROUSEL. Not needed for image posts."
           },
           "caption": {
             "type": "string",
@@ -2464,7 +2464,7 @@
           },
           "is_carousel_item": {
             "type": "boolean",
-            "description": "Set to true if this media will be part of a carousel"
+            "description": "If the media will be part of a carousel, set to true"
           },
           "children": {
             "type": "array",
