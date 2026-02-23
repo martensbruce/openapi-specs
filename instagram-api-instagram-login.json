@@ -1,0 +1,2730 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Instagram API with Instagram Login",
+    "description": "The Instagram API with Instagram Login allows Instagram professionals (businesses and creators) to manage their presence on Instagram. This API uses Business Login for Instagram where users authenticate with their Instagram credentials.\n\nCapabilities include:\n- Comment moderation - Manage and reply to comments on media\n- Content publishing - Get and publish media (images, videos, reels, stories, carousels)\n- Media Insights - Get insights on media performance\n- Mentions - Identify media where the account has been @mentioned\n- Messaging - Send and receive messages with customers",
+    "version": "25.0",
+    "contact": {
+      "name": "Meta for Developers",
+      "url": "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login"
+    },
+    "license": {
+      "name": "Meta Platform Terms",
+      "url": "https://developers.facebook.com/terms/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://graph.instagram.com/v25.0",
+      "description": "Instagram Graph API (Production)"
+    }
+  ],
+  "security": [
+    {
+      "instagram_oauth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "Instagram User (IG User) endpoints for accessing account information"
+    },
+    {
+      "name": "Media",
+      "description": "Instagram Media (IG Media) endpoints for accessing and managing media"
+    },
+    {
+      "name": "Publishing",
+      "description": "Content publishing endpoints for creating and publishing media"
+    },
+    {
+      "name": "Comments",
+      "description": "Comment moderation endpoints for managing comments and replies"
+    },
+    {
+      "name": "Insights",
+      "description": "Insights endpoints for accessing media and account analytics"
+    },
+    {
+      "name": "Mentions",
+      "description": "Mentions endpoints for accessing @mentions"
+    },
+    {
+      "name": "Messaging",
+      "description": "Messaging endpoints for conversations and direct messages"
+    }
+  ],
+  "paths": {
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "Get current user profile",
+        "description": "Get fields and edges on the Instagram Business or Creator Account associated with the access token.",
+        "tags": ["User"],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,username,name,biography,followers_count,follows_count,media_count,profile_picture_url,website"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}": {
+      "get": {
+        "operationId": "getUser",
+        "summary": "Get user profile by ID",
+        "description": "Get fields and edges on an Instagram Business or Creator Account.",
+        "tags": ["User"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,username,name,biography,followers_count,follows_count,media_count,profile_picture_url,website"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/media": {
+      "get": {
+        "operationId": "getUserMedia",
+        "summary": "List user's media",
+        "description": "Get a collection of IG Media objects on an Instagram Business or Creator Account.",
+        "tags": ["User", "Media"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of media fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (next page)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cursor for pagination (previous page)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMediaList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createMediaContainer",
+        "summary": "Create media container",
+        "description": "Create a media container for publishing an image, video, reel, story, or carousel item. After creating the container, use the media_publish endpoint to publish it.",
+        "tags": ["Publishing"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMediaContainerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Container created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContainerCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/stories": {
+      "get": {
+        "operationId": "getUserStories",
+        "summary": "List user's stories",
+        "description": "Get a collection of story IG Media objects on an Instagram Business or Creator Account. Stories are only available for 24 hours.",
+        "tags": ["User", "Media"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of media fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,media_type,media_url,permalink,timestamp,username"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMediaList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/live_media": {
+      "get": {
+        "operationId": "getUserLiveMedia",
+        "summary": "List user's live media",
+        "description": "Get a collection of live video IG Media objects on an Instagram Business or Creator Account. Live media can only be read while being broadcast.",
+        "tags": ["User", "Media"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of media fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,media_type,media_url,permalink,timestamp,username"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMediaList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/content_publishing_limit": {
+      "get": {
+        "operationId": "getContentPublishingLimit",
+        "summary": "Get content publishing limit",
+        "description": "Get the current content publishing rate limit usage for an Instagram Business or Creator Account. Instagram accounts are limited to 100 API-published posts within a 24-hour moving period.",
+        "tags": ["Publishing"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "config,quota_usage"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentPublishingLimit"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/media_publish": {
+      "post": {
+        "operationId": "publishMedia",
+        "summary": "Publish media container",
+        "description": "Publish a previously created media container. The container must have a status of FINISHED before it can be published.",
+        "tags": ["Publishing"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["creation_id"],
+                "properties": {
+                  "creation_id": {
+                    "type": "string",
+                    "description": "The container ID returned from the create media container endpoint"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Media published successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaPublishedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-media-id}": {
+      "get": {
+        "operationId": "getMedia",
+        "summary": "Get media by ID",
+        "description": "Get fields and edges on an Instagram Media object (photo, video, story, reel, or album).",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "ig-media-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Media ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username,comments_count,like_count,is_shared_to_feed"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMedia"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "updateMedia",
+        "summary": "Update media settings",
+        "description": "Enable or disable comments on an Instagram Media object.",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "ig-media-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Media ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comment_enabled": {
+                    "type": "boolean",
+                    "description": "Set to true to enable comments, false to disable"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Media updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-media-id}/children": {
+      "get": {
+        "operationId": "getMediaChildren",
+        "summary": "Get carousel children",
+        "description": "Get a collection of IG Media objects on an album (carousel) IG Media.",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "ig-media-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Media ID (must be a carousel/album)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return for each child",
+            "schema": {
+              "type": "string",
+              "example": "id,media_type,media_url,timestamp"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMediaList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-container-id}": {
+      "get": {
+        "operationId": "getContainer",
+        "summary": "Get container status",
+        "description": "Get the status of a media container. Use this to check if a container is ready for publishing.",
+        "tags": ["Publishing"],
+        "parameters": [
+          {
+            "name": "ig-container-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Container ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,status_code,status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGContainer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-media-id}/comments": {
+      "get": {
+        "operationId": "getMediaComments",
+        "summary": "List comments on media",
+        "description": "Get a collection of IG Comment objects on an IG Media object.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-media-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Media ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of comment fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,text,timestamp,username,like_count,hidden,replies"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (next page)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cursor for pagination (previous page)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGCommentList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createComment",
+        "summary": "Create comment on media",
+        "description": "Create an IG Comment on an IG Media object.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-media-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Media ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "The comment text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-comment-id}": {
+      "get": {
+        "operationId": "getComment",
+        "summary": "Get comment by ID",
+        "description": "Get fields and edges on an IG Comment.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-comment-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Comment ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,text,timestamp,username,like_count,hidden,replies,from,media,parent_id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGComment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "updateComment",
+        "summary": "Hide or unhide comment",
+        "description": "Hide or unhide an IG Comment.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-comment-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Comment ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["hide"],
+                "properties": {
+                  "hide": {
+                    "type": "boolean",
+                    "description": "Set to true to hide the comment, false to show it"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteComment",
+        "summary": "Delete comment",
+        "description": "Delete an IG Comment. A comment can only be deleted by the owner of the media object upon which the comment was made.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-comment-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Comment ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-comment-id}/replies": {
+      "get": {
+        "operationId": "getCommentReplies",
+        "summary": "Get replies to comment",
+        "description": "Get a collection of IG Comment replies on an IG Comment.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-comment-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Comment ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,text,timestamp,username,like_count,hidden"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (next page)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cursor for pagination (previous page)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGCommentList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCommentReply",
+        "summary": "Reply to comment",
+        "description": "Create an IG Comment reply on an IG Comment.",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "ig-comment-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Comment ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "The reply text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reply created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-media-id}/insights": {
+      "get": {
+        "operationId": "getMediaInsights",
+        "summary": "Get media insights",
+        "description": "Get insights data on an Instagram Media object. Metrics include reach, views, likes, comments, shares, and saved counts.",
+        "tags": ["Insights"],
+        "parameters": [
+          {
+            "name": "ig-media-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Media ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated list of metrics to return. Available metrics depend on media type (FEED, REELS, STORY).",
+            "schema": {
+              "type": "string",
+              "example": "reach,views,likes,comments,shares,saved,total_interactions"
+            }
+          },
+          {
+            "name": "breakdown",
+            "in": "query",
+            "description": "Break down results into subsets. Options: action_type (for profile_activity), story_navigation_action_type (for navigation)",
+            "schema": {
+              "type": "string",
+              "enum": ["action_type", "story_navigation_action_type"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGInsightsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/insights": {
+      "get": {
+        "operationId": "getUserInsights",
+        "summary": "Get user account insights",
+        "description": "Get social interaction metrics on an Instagram Business or Creator Account.",
+        "tags": ["Insights"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated list of metrics to return",
+            "schema": {
+              "type": "string",
+              "example": "impressions,reach,profile_views,accounts_engaged,total_interactions"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": true,
+            "description": "Time period for the metrics",
+            "schema": {
+              "type": "string",
+              "enum": ["day", "week", "days_28", "month", "lifetime"]
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Unix timestamp for the start of the range",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "Unix timestamp for the end of the range",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "breakdown",
+            "in": "query",
+            "description": "Break down results into subsets",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGInsightsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/mentions": {
+      "post": {
+        "operationId": "replyToMention",
+        "summary": "Reply to a mention",
+        "description": "Create an IG Comment on an IG Comment or captioned IG Media that the user has been @mentioned in by another Instagram user.",
+        "tags": ["Mentions"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["media_id", "message"],
+                "properties": {
+                  "media_id": {
+                    "type": "string",
+                    "description": "The ID of the media object containing the mention"
+                  },
+                  "comment_id": {
+                    "type": "string",
+                    "description": "The ID of the comment containing the mention (if replying to a comment mention)"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "The reply message"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reply created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/mentioned_media": {
+      "get": {
+        "operationId": "getMentionedMedia",
+        "summary": "Get mentioned media",
+        "description": "Get data on an IG Media in which the user has been @mentioned in a caption by another Instagram user.",
+        "tags": ["Mentions"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "media_id",
+            "in": "query",
+            "required": true,
+            "description": "The ID of the media containing the mention (from webhook notification)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,caption,media_type,media_url,permalink,timestamp,username"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMedia"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/mentioned_comment": {
+      "get": {
+        "operationId": "getMentionedComment",
+        "summary": "Get mentioned comment",
+        "description": "Get data on an IG Comment in which the user has been @mentioned by another Instagram user.",
+        "tags": ["Mentions"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "comment_id",
+            "in": "query",
+            "required": true,
+            "description": "The ID of the comment containing the mention (from webhook notification)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,text,timestamp,username,like_count"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGComment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/tags": {
+      "get": {
+        "operationId": "getUserTags",
+        "summary": "Get tagged media",
+        "description": "Get a collection of IG Media in which the user has been tagged by another Instagram user.",
+        "tags": ["Mentions"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,caption,media_type,media_url,permalink,timestamp,username"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (next page)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cursor for pagination (previous page)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMediaList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/conversations": {
+      "get": {
+        "operationId": "getConversations",
+        "summary": "List conversations",
+        "description": "Get a list of Instagram Direct message conversations for the user.",
+        "tags": ["Messaging"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,participants,messages,updated_time"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "description": "Filter conversations by platform",
+            "schema": {
+              "type": "string",
+              "enum": ["instagram"]
+            }
+          },
+          {
+            "name": "folder",
+            "in": "query",
+            "description": "Filter conversations by folder",
+            "schema": {
+              "type": "string",
+              "enum": ["inbox", "spam"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (next page)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cursor for pagination (previous page)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGConversationList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-conversation-id}": {
+      "get": {
+        "operationId": "getConversation",
+        "summary": "Get conversation by ID",
+        "description": "Get details of a specific Instagram Direct message conversation.",
+        "tags": ["Messaging"],
+        "parameters": [
+          {
+            "name": "ig-conversation-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Conversation ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,participants,messages,updated_time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGConversation"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-conversation-id}/messages": {
+      "get": {
+        "operationId": "getConversationMessages",
+        "summary": "Get messages in conversation",
+        "description": "Get a list of messages in an Instagram Direct message conversation.",
+        "tags": ["Messaging"],
+        "parameters": [
+          {
+            "name": "ig-conversation-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Conversation ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,message,from,to,created_time,attachments"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Cursor for pagination (next page)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Cursor for pagination (previous page)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMessageList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-user-id}/messages": {
+      "post": {
+        "operationId": "sendMessage",
+        "summary": "Send message",
+        "description": "Send a message to an Instagram user. Messages can only be sent within 24 hours of the user's last message, or within 7 days if using the human_agent tag.",
+        "tags": ["Messaging"],
+        "parameters": [
+          {
+            "name": "ig-user-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram User ID (your professional account)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageSentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/{ig-message-id}": {
+      "get": {
+        "operationId": "getMessage",
+        "summary": "Get message by ID",
+        "description": "Get details of a specific Instagram Direct message.",
+        "tags": ["Messaging"],
+        "parameters": [
+          {
+            "name": "ig-message-id",
+            "in": "path",
+            "required": true,
+            "description": "The Instagram Message ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "example": "id,message,from,to,created_time,attachments,reactions,shares,story"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IGMessage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/access_token": {
+      "get": {
+        "operationId": "refreshAccessToken",
+        "summary": "Refresh access token",
+        "description": "Refresh a valid long-lived Instagram User access token before it expires. Long-lived tokens are valid for 60 days and can be refreshed as long as they are at least 24 hours old but have not expired.",
+        "tags": ["User"],
+        "parameters": [
+          {
+            "name": "grant_type",
+            "in": "query",
+            "required": true,
+            "description": "Must be set to ig_refresh_token",
+            "schema": {
+              "type": "string",
+              "enum": ["ig_refresh_token"]
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": true,
+            "description": "A valid long-lived Instagram User access token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "instagram_oauth": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authentication using Instagram Business Login. Users authenticate with their Instagram credentials.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://www.instagram.com/oauth/authorize",
+            "tokenUrl": "https://api.instagram.com/oauth/access_token",
+            "refreshUrl": "https://graph.instagram.com/refresh_access_token",
+            "scopes": {
+              "instagram_business_basic": "Read user profile information and media",
+              "instagram_business_content_publish": "Publish images, videos, reels, stories, and carousels",
+              "instagram_business_manage_comments": "Read, create, hide, and delete comments",
+              "instagram_business_manage_messages": "Read and send Instagram Direct messages",
+              "instagram_business_manage_insights": "Access insights and analytics data"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request - invalid parameters or request body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - invalid or expired access token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "IGUser": {
+        "type": "object",
+        "description": "Represents an Instagram Business Account or Instagram Creator Account",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "App-scoped User ID"
+          },
+          "username": {
+            "type": "string",
+            "description": "Instagram profile username"
+          },
+          "name": {
+            "type": "string",
+            "description": "Instagram profile name"
+          },
+          "biography": {
+            "type": "string",
+            "description": "Profile bio text"
+          },
+          "followers_count": {
+            "type": "integer",
+            "description": "Total number of Instagram users following the account"
+          },
+          "follows_count": {
+            "type": "integer",
+            "description": "Total number of Instagram users the account follows"
+          },
+          "media_count": {
+            "type": "integer",
+            "description": "Total number of IG Media published on the account"
+          },
+          "profile_picture_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Profile picture URL"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "Website URL from profile"
+          },
+          "has_profile_pic": {
+            "type": "boolean",
+            "description": "Whether the account has a profile picture"
+          },
+          "is_published": {
+            "type": "boolean",
+            "description": "Whether the Instagram account is published"
+          }
+        }
+      },
+      "IGMedia": {
+        "type": "object",
+        "description": "Represents an Instagram photo, video, story, reel, or album",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Media ID"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Caption text (excludes album children)"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": ["IMAGE", "VIDEO", "CAROUSEL_ALBUM"],
+            "description": "Type of media"
+          },
+          "media_product_type": {
+            "type": "string",
+            "enum": ["FEED", "STORY", "REELS"],
+            "description": "Surface where the media is published"
+          },
+          "media_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for the media (omitted if copyrighted material)"
+          },
+          "permalink": {
+            "type": "string",
+            "format": "uri",
+            "description": "Permanent URL to the media"
+          },
+          "shortcode": {
+            "type": "string",
+            "description": "Shortcode to the media"
+          },
+          "thumbnail_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Thumbnail URL (only for VIDEO media)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 formatted creation date in UTC"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of user who created the media"
+          },
+          "owner": {
+            "type": "object",
+            "description": "Instagram user who created the media (only if querying user created it)",
+            "properties": {
+              "id": {
+                "type": "string"
+              }
+            }
+          },
+          "comments_count": {
+            "type": "integer",
+            "description": "Count of comments on the media"
+          },
+          "like_count": {
+            "type": "integer",
+            "description": "Count of likes on the media"
+          },
+          "is_comment_enabled": {
+            "type": "boolean",
+            "description": "Whether comments are enabled"
+          },
+          "is_shared_to_feed": {
+            "type": "boolean",
+            "description": "For Reels - whether it appears in Feed and Reels tabs"
+          },
+          "alt_text": {
+            "type": "string",
+            "description": "Descriptive text for images (accessibility)"
+          },
+          "children": {
+            "type": "object",
+            "description": "Children media for carousel albums",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IGMedia"
+                }
+              }
+            }
+          }
+        }
+      },
+      "IGMediaList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IGMedia"
+            }
+          },
+          "paging": {
+            "$ref": "#/components/schemas/Paging"
+          }
+        }
+      },
+      "IGContainer": {
+        "type": "object",
+        "description": "Represents a media container for publishing Instagram media",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Container ID"
+          },
+          "status_code": {
+            "type": "string",
+            "enum": ["PUBLISHED", "IN_PROGRESS", "FINISHED", "ERROR", "EXPIRED"],
+            "description": "Publishing status of the container"
+          },
+          "status": {
+            "type": "string",
+            "description": "Error subcode if status_code is ERROR"
+          },
+          "copyright_check_status": {
+            "type": "object",
+            "description": "Copyright check status for videos",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["not_started", "in_progress", "error", "completed"]
+              },
+              "matches_found": {
+                "type": "boolean",
+                "description": "Whether copyright violation was detected"
+              }
+            }
+          }
+        }
+      },
+      "IGComment": {
+        "type": "object",
+        "description": "Represents a comment on an Instagram media object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Comment ID"
+          },
+          "text": {
+            "type": "string",
+            "description": "Comment text"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 formatted creation date"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the commenter"
+          },
+          "like_count": {
+            "type": "integer",
+            "description": "Number of likes on the comment"
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Whether the comment is hidden"
+          },
+          "from": {
+            "type": "object",
+            "description": "User who created the comment",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Instagram-scoped ID of the commenter"
+              },
+              "username": {
+                "type": "string"
+              }
+            }
+          },
+          "media": {
+            "type": "object",
+            "description": "Media object the comment was made on",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "media_product_type": {
+                "type": "string"
+              }
+            }
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "ID of parent comment if this is a reply"
+          },
+          "replies": {
+            "type": "object",
+            "description": "Replies to this comment",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IGComment"
+                }
+              }
+            }
+          }
+        }
+      },
+      "IGCommentList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IGComment"
+            }
+          },
+          "paging": {
+            "$ref": "#/components/schemas/Paging"
+          }
+        }
+      },
+      "IGInsightsResponse": {
+        "type": "object",
+        "description": "Response containing insights metrics data",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IGInsight"
+            }
+          },
+          "paging": {
+            "$ref": "#/components/schemas/Paging"
+          }
+        }
+      },
+      "IGInsight": {
+        "type": "object",
+        "description": "A single insight metric",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Metric path identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Metric name"
+          },
+          "period": {
+            "type": "string",
+            "description": "Time period for the metric"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable metric title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Metric description"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer",
+                  "description": "Metric value"
+                },
+                "end_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "End time for time-series data"
+                }
+              }
+            }
+          },
+          "total_value": {
+            "type": "object",
+            "description": "Total value with optional breakdowns",
+            "properties": {
+              "value": {
+                "type": "integer"
+              },
+              "breakdowns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "dimension_keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "dimension_values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "value": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "IGConversation": {
+        "type": "object",
+        "description": "Represents an Instagram Direct message conversation",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Conversation ID"
+          },
+          "participants": {
+            "type": "object",
+            "description": "Participants in the conversation",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "messages": {
+            "type": "object",
+            "description": "Messages in the conversation",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/IGMessage"
+                }
+              }
+            }
+          },
+          "updated_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update time"
+          }
+        }
+      },
+      "IGConversationList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IGConversation"
+            }
+          },
+          "paging": {
+            "$ref": "#/components/schemas/Paging"
+          }
+        }
+      },
+      "IGMessage": {
+        "type": "object",
+        "description": "Represents an Instagram Direct message",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Message ID"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message text content"
+          },
+          "from": {
+            "type": "object",
+            "description": "Sender of the message",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "to": {
+            "type": "object",
+            "description": "Recipients of the message",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "created_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Message creation time"
+          },
+          "attachments": {
+            "type": "object",
+            "description": "Media attachments",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["image", "video", "audio", "file", "share", "story_mention", "ig_reel", "ig_post"]
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "reactions": {
+            "type": "object",
+            "description": "Reactions to the message",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "reaction": {
+                      "type": "string"
+                    },
+                    "from": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "shares": {
+            "type": "object",
+            "description": "Shared content",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "link": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "story": {
+            "type": "object",
+            "description": "Story reply reference",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "media_url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "is_unsupported": {
+            "type": "boolean",
+            "description": "Whether the message type is unsupported"
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "description": "Whether the message was deleted"
+          },
+          "is_echo": {
+            "type": "boolean",
+            "description": "Whether this is an echo of a sent message"
+          }
+        }
+      },
+      "IGMessageList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IGMessage"
+            }
+          },
+          "paging": {
+            "$ref": "#/components/schemas/Paging"
+          }
+        }
+      },
+      "CreateMediaContainerRequest": {
+        "type": "object",
+        "description": "Request body for creating a media container",
+        "properties": {
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the image to publish (for IMAGE media)"
+          },
+          "video_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the video to publish (for VIDEO, REELS, STORIES media)"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": ["IMAGE", "VIDEO", "REELS", "STORIES", "CAROUSEL"],
+            "description": "Type of media to create. Required for VIDEO, REELS, STORIES, and CAROUSEL"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Caption for the media (max 2200 characters, 30 hashtags, 20 @mentions)"
+          },
+          "alt_text": {
+            "type": "string",
+            "description": "Accessibility text for images"
+          },
+          "location_id": {
+            "type": "string",
+            "description": "Location page ID to tag"
+          },
+          "user_tags": {
+            "type": "array",
+            "description": "Users to tag in the media",
+            "items": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "x": {
+                  "type": "number",
+                  "description": "X position (0-1) for image tags"
+                },
+                "y": {
+                  "type": "number",
+                  "description": "Y position (0-1) for image tags"
+                }
+              }
+            }
+          },
+          "is_carousel_item": {
+            "type": "boolean",
+            "description": "Set to true if this media will be part of a carousel"
+          },
+          "children": {
+            "type": "array",
+            "description": "Container IDs for carousel items (when media_type is CAROUSEL)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "share_to_feed": {
+            "type": "boolean",
+            "description": "For REELS - whether to also share to Feed"
+          },
+          "cover_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of cover image for REELS"
+          },
+          "thumb_offset": {
+            "type": "integer",
+            "description": "Thumbnail offset in milliseconds for VIDEO"
+          },
+          "audio_name": {
+            "type": "string",
+            "description": "Audio name for REELS"
+          },
+          "collaborators": {
+            "type": "array",
+            "description": "Usernames of collaborators to invite",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "description": "Request body for sending a message",
+        "required": ["recipient", "message"],
+        "properties": {
+          "recipient": {
+            "type": "object",
+            "description": "The recipient of the message",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Instagram-scoped ID of the recipient"
+              }
+            }
+          },
+          "message": {
+            "type": "object",
+            "description": "The message content",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "Text content of the message"
+              },
+              "attachment": {
+                "type": "object",
+                "description": "Media attachment",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["image", "video", "audio", "file"],
+                    "description": "Type of attachment"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL of the attachment"
+                      }
+                    }
+                  }
+                }
+              },
+              "reaction": {
+                "type": "object",
+                "description": "Reaction to a message",
+                "properties": {
+                  "emoji": {
+                    "type": "string",
+                    "description": "The reaction emoji"
+                  },
+                  "message_id": {
+                    "type": "string",
+                    "description": "ID of the message to react to"
+                  }
+                }
+              }
+            }
+          },
+          "messaging_type": {
+            "type": "string",
+            "enum": ["RESPONSE", "UPDATE", "MESSAGE_TAG"],
+            "description": "Type of message being sent"
+          },
+          "tag": {
+            "type": "string",
+            "enum": ["human_agent"],
+            "description": "Message tag for extended messaging window (7 days)"
+          }
+        }
+      },
+      "ContainerCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The created container ID"
+          }
+        }
+      },
+      "MediaPublishedResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The published media ID"
+          }
+        }
+      },
+      "CommentCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The created comment ID"
+          }
+        }
+      },
+      "MessageSentResponse": {
+        "type": "object",
+        "properties": {
+          "recipient_id": {
+            "type": "string",
+            "description": "Instagram-scoped ID of the recipient"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "ID of the sent message"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation succeeded"
+          }
+        }
+      },
+      "RefreshTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "The new long-lived access token"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": ["bearer"],
+            "description": "Token type"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Token expiration time in seconds (typically 5184000 for 60 days)"
+          }
+        }
+      },
+      "ContentPublishingLimit": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "object",
+            "properties": {
+              "quota_total": {
+                "type": "integer",
+                "description": "Maximum number of posts allowed in the time period (typically 100)"
+              },
+              "quota_duration": {
+                "type": "integer",
+                "description": "Duration of the quota period in seconds"
+              }
+            }
+          },
+          "quota_usage": {
+            "type": "integer",
+            "description": "Number of posts published in the current period"
+          }
+        }
+      },
+      "Paging": {
+        "type": "object",
+        "description": "Pagination cursors",
+        "properties": {
+          "cursors": {
+            "type": "object",
+            "properties": {
+              "before": {
+                "type": "string",
+                "description": "Cursor for previous page"
+              },
+              "after": {
+                "type": "string",
+                "description": "Cursor for next page"
+              }
+            }
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for next page of results"
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for previous page of results"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Error response from the API",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message"
+              },
+              "type": {
+                "type": "string",
+                "description": "Error type (e.g., OAuthException)"
+              },
+              "code": {
+                "type": "integer",
+                "description": "Error code"
+              },
+              "error_subcode": {
+                "type": "integer",
+                "description": "Error subcode for more specific errors"
+              },
+              "error_user_title": {
+                "type": "string",
+                "description": "User-friendly error title"
+              },
+              "error_user_msg": {
+                "type": "string",
+                "description": "User-friendly error message"
+              },
+              "fbtrace_id": {
+                "type": "string",
+                "description": "Trace ID for debugging"
+              },
+              "is_transient": {
+                "type": "boolean",
+                "description": "Whether the error is transient and can be retried"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
