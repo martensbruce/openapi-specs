@@ -1747,53 +1747,6 @@
           }
         }
       }
-    },
-    "/access_token": {
-      "get": {
-        "operationId": "refreshAccessToken",
-        "summary": "Refresh access token",
-        "description": "Refresh a valid long-lived Instagram User access token before it expires. Long-lived tokens are valid for 60 days and can be refreshed as long as they are at least 24 hours old but have not expired.",
-        "tags": ["User"],
-        "parameters": [
-          {
-            "name": "grant_type",
-            "in": "query",
-            "required": true,
-            "description": "Must be set to ig_refresh_token",
-            "schema": {
-              "type": "string",
-              "enum": ["ig_refresh_token"]
-            }
-          },
-          {
-            "name": "access_token",
-            "in": "query",
-            "required": true,
-            "description": "A valid long-lived Instagram User access token",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Token refreshed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefreshTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -2665,24 +2618,6 @@
           "success": {
             "type": "boolean",
             "description": "Whether the operation succeeded"
-          }
-        }
-      },
-      "RefreshTokenResponse": {
-        "type": "object",
-        "properties": {
-          "access_token": {
-            "type": "string",
-            "description": "The new long-lived access token"
-          },
-          "token_type": {
-            "type": "string",
-            "enum": ["bearer"],
-            "description": "Token type"
-          },
-          "expires_in": {
-            "type": "integer",
-            "description": "Token expiration time in seconds (typically 5184000 for 60 days)"
           }
         }
       },
