@@ -1,0 +1,396 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OpenWeatherMap Historical Weather API",
+    "description": "The OpenWeatherMap History API provides hourly historical weather data for any location on the globe. Data availability depends on subscription type.\n\nCapabilities include:\n- Hourly historical weather data by geographic coordinates\n- Historical data by city name (deprecated)\n- Historical data by city ID (deprecated)\n- Support for multiple units of measurement (standard, metric, imperial)\n\nNote: For Professional and Expert plans, the maximum historical data depth in one API response is one week. Use multiple queries for longer periods.",
+    "version": "2.5",
+    "contact": {
+      "name": "OpenWeatherMap",
+      "url": "https://openweathermap.org/history"
+    },
+    "license": {
+      "name": "OpenWeatherMap Terms",
+      "url": "https://openweathermap.org/terms"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://history.openweathermap.org/data/2.5",
+      "description": "OpenWeatherMap History API (Production)"
+    }
+  ],
+  "security": [
+    {
+      "api_key": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Historical Weather",
+      "description": "Endpoints for retrieving historical weather data"
+    }
+  ],
+  "paths": {
+    "/history/city": {
+      "get": {
+        "operationId": "getHistoricalWeather",
+        "summary": "Get historical weather data",
+        "description": "Retrieve hourly historical weather data for a location. You can specify the location using coordinates (recommended), city name, or city ID.\n\n**By coordinates (recommended):** Use `lat` and `lon` parameters.\n\n**By city name (deprecated):** Use `q` parameter with format `{city name},{state code},{country code}`.\n\n**By city ID (deprecated):** Use `id` parameter with a city ID from the OpenWeatherMap city list.\n\nNote: Built-in geocoding by city name and ID is deprecated. Use the Geocoding API for automatic conversion of city names to coordinates.",
+        "tags": ["Historical Weather"],
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Latitude of the location. Required when using coordinate-based lookup (recommended method).",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": -90,
+              "maximum": 90,
+              "example": 41.85
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "Longitude of the location. Required when using coordinate-based lookup (recommended method).",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": -180,
+              "maximum": 180,
+              "example": -87.65
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "City name, state code, and country code divided by comma. Follows ISO 3166 for state/country codes. **Deprecated:** Use coordinates with Geocoding API instead.",
+            "deprecated": true,
+            "schema": {
+              "type": "string",
+              "example": "London,UK"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "City ID from the OpenWeatherMap city list. **Deprecated:** Use coordinates with Geocoding API instead.",
+            "deprecated": true,
+            "schema": {
+              "type": "integer",
+              "example": 2885679
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "description": "Type of the call. Must be set to 'hour' for hourly historical data.",
+            "schema": {
+              "type": "string",
+              "enum": ["hour"],
+              "default": "hour"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Start date as Unix timestamp (UTC timezone). Example: 1369728000",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1643720400
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "End date as Unix timestamp (UTC timezone). Example: 1369789200. Cannot be used together with 'cnt'.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 1643806800
+            }
+          },
+          {
+            "name": "cnt",
+            "in": "query",
+            "description": "Number of timestamps to return in the response (one per hour). Can be used instead of 'end' parameter.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 24
+            }
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "description": "Units of measurement. Standard (default): temperature in Kelvin, wind speed in meter/sec. Metric: temperature in Celsius, wind speed in meter/sec. Imperial: temperature in Fahrenheit, wind speed in miles/hour.",
+            "schema": {
+              "type": "string",
+              "enum": ["standard", "metric", "imperial"],
+              "default": "standard"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with historical weather data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalWeatherResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "api_key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Your unique OpenWeatherMap API key. You can find it on your account page under the 'API key' tab at https://home.openweathermap.org/api_keys"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request - invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - invalid or missing API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found - city or location not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too many requests - API rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "HistoricalWeatherResponse": {
+        "type": "object",
+        "description": "Response containing historical weather data for a location",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Internal parameter"
+          },
+          "cod": {
+            "type": "string",
+            "description": "Internal parameter (HTTP status code)"
+          },
+          "city_id": {
+            "type": "integer",
+            "description": "City ID"
+          },
+          "calctime": {
+            "type": "number",
+            "description": "Internal parameter (calculation time)"
+          },
+          "cnt": {
+            "type": "integer",
+            "description": "Number of timestamps returned in the response"
+          },
+          "list": {
+            "type": "array",
+            "description": "Array of hourly weather data",
+            "items": {
+              "$ref": "#/components/schemas/HourlyWeatherData"
+            }
+          }
+        }
+      },
+      "HourlyWeatherData": {
+        "type": "object",
+        "description": "Weather data for a specific hour",
+        "properties": {
+          "dt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Time of data calculation, Unix timestamp (UTC)"
+          },
+          "main": {
+            "$ref": "#/components/schemas/MainWeatherData"
+          },
+          "wind": {
+            "$ref": "#/components/schemas/WindData"
+          },
+          "clouds": {
+            "$ref": "#/components/schemas/CloudsData"
+          },
+          "rain": {
+            "$ref": "#/components/schemas/PrecipitationData"
+          },
+          "snow": {
+            "$ref": "#/components/schemas/PrecipitationData"
+          },
+          "weather": {
+            "type": "array",
+            "description": "Weather condition information",
+            "items": {
+              "$ref": "#/components/schemas/WeatherCondition"
+            }
+          }
+        }
+      },
+      "MainWeatherData": {
+        "type": "object",
+        "description": "Main weather parameters",
+        "properties": {
+          "temp": {
+            "type": "number",
+            "description": "Temperature. Unit: Kelvin (standard), Celsius (metric), Fahrenheit (imperial)"
+          },
+          "feels_like": {
+            "type": "number",
+            "description": "Human perception of temperature. Unit: Kelvin (standard), Celsius (metric), Fahrenheit (imperial)"
+          },
+          "pressure": {
+            "type": "integer",
+            "description": "Atmospheric pressure on the sea level, hPa"
+          },
+          "humidity": {
+            "type": "integer",
+            "description": "Humidity percentage (0-100)"
+          },
+          "temp_min": {
+            "type": "number",
+            "description": "Minimum temperature within a large city or megalopolis at the moment of calculation. Optional parameter."
+          },
+          "temp_max": {
+            "type": "number",
+            "description": "Maximum temperature within a large city or megalopolis at the moment of calculation. Optional parameter."
+          },
+          "sea_level": {
+            "type": "integer",
+            "description": "Atmospheric pressure on the sea level, hPa"
+          },
+          "grnd_level": {
+            "type": "integer",
+            "description": "Atmospheric pressure on the ground level, hPa"
+          }
+        }
+      },
+      "WindData": {
+        "type": "object",
+        "description": "Wind information",
+        "properties": {
+          "speed": {
+            "type": "number",
+            "description": "Wind speed. Unit: meter/sec (standard, metric), miles/hour (imperial)"
+          },
+          "deg": {
+            "type": "integer",
+            "description": "Wind direction in degrees (meteorological)"
+          }
+        }
+      },
+      "CloudsData": {
+        "type": "object",
+        "description": "Cloudiness information",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "description": "Cloudiness percentage (0-100)"
+          }
+        }
+      },
+      "PrecipitationData": {
+        "type": "object",
+        "description": "Precipitation volume data (rain or snow)",
+        "properties": {
+          "1h": {
+            "type": "number",
+            "description": "Precipitation volume for the last 1 hour, mm"
+          },
+          "3h": {
+            "type": "number",
+            "description": "Precipitation volume for the last 3 hours, mm"
+          }
+        }
+      },
+      "WeatherCondition": {
+        "type": "object",
+        "description": "Weather condition details",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Weather condition ID. See https://openweathermap.org/weather-conditions for full list"
+          },
+          "main": {
+            "type": "string",
+            "description": "Group of weather parameters (Rain, Snow, Clouds, Clear, Thunderstorm, Drizzle, Atmosphere, etc.)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Weather condition description within the group"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Weather icon ID"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Error response from the API",
+        "properties": {
+          "cod": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message describing the issue"
+          }
+        }
+      }
+    }
+  }
+}
