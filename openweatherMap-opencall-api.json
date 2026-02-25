@@ -1,0 +1,455 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OpenWeather One Call API 3.0",
+    "description": "One Call API 3.0 provides current weather, forecasts, historical weather data for any timestamp, daily aggregation, and weather overview. Based on the proprietary OpenWeather Model, updated every 10 minutes. Requires 'One Call by Call' subscription.",
+    "version": "3.0.0",
+    "contact": {
+      "name": "OpenWeather",
+      "url": "https://openweathermap.org/api/one-call-3"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.openweathermap.org",
+      "description": "OpenWeather API"
+    }
+  ],
+  "security": [{ "ApiKeyHeader": [] }],
+  "paths": {
+    "/data/3.0/onecall": {
+      "get": {
+        "summary": "Current and forecasts weather data",
+        "description": "Current weather, 1-minute forecast for 1 hour, hourly forecast for 48 hours, daily forecast for 8 days, and government weather alerts.",
+        "operationId": "getOneCall",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -90, "maximum": 90 },
+            "description": "Latitude, decimal (-90; 90)"
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -180, "maximum": 180 },
+            "description": "Longitude, decimal (-180; 180)"
+          },
+          {
+            "name": "exclude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Comma-delimited list without spaces. Available: current, minutely, hourly, daily, alerts"
+            }
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["standard", "metric", "imperial"] },
+            "description": "standard (Kelvin), metric (Celsius), imperial (Fahrenheit)"
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Language code for output (e.g. en, de, zh_cn)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lat": { "type": "number" },
+                    "lon": { "type": "number" },
+                    "timezone": { "type": "string" },
+                    "timezone_offset": { "type": "integer" },
+                    "current": { "$ref": "#/components/schemas/CurrentWeather" },
+                    "minutely": { "type": "array", "items": { "$ref": "#/components/schemas/Minutely" } },
+                    "hourly": { "type": "array", "items": { "$ref": "#/components/schemas/Hourly" } },
+                    "daily": { "type": "array", "items": { "$ref": "#/components/schemas/Daily" } },
+                    "alerts": { "type": "array", "items": { "$ref": "#/components/schemas/Alert" } }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/data/3.0/onecall/timemachine": {
+      "get": {
+        "summary": "Weather data for timestamp",
+        "description": "Weather data for any timestamp from 1 January 1979 till 4 days ahead forecast. One response contains data for one specified timestamp.",
+        "operationId": "getTimemachine",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -90, "maximum": 90 },
+            "description": "Latitude, decimal (-90; 90)"
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -180, "maximum": 180 },
+            "description": "Longitude, decimal (-180; 180)"
+          },
+          {
+            "name": "dt",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "description": "Unix time, UTC" },
+            "description": "Timestamp (Unix time, UTC). Data from 1979-01-01 till 4 days ahead"
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["standard", "metric", "imperial"] }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lat": { "type": "number" },
+                    "lon": { "type": "number" },
+                    "timezone": { "type": "string" },
+                    "timezone_offset": { "type": "integer" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TimemachineDataPoint" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/data/3.0/onecall/day_summary": {
+      "get": {
+        "summary": "Daily aggregation",
+        "description": "Aggregated weather data for a particular date from 2 January 1979 till 1.5 years ahead forecast.",
+        "operationId": "getDaySummary",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -90, "maximum": 90 },
+            "description": "Latitude, decimal (-90; 90)"
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -180, "maximum": 180 },
+            "description": "Longitude, decimal (-180; 180)"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            "description": "Date in YYYY-MM-DD format (1979-01-02 up to 1.5 years ahead)"
+          },
+          {
+            "name": "tz",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^[+-]\\d{2}:\\d{2}$" },
+            "description": "Timezone in ±XX:XX format"
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["standard", "metric", "imperial"] }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lat": { "type": "number" },
+                    "lon": { "type": "number" },
+                    "tz": { "type": "string" },
+                    "date": { "type": "string" },
+                    "units": { "type": "string" },
+                    "cloud_cover": { "type": "object" },
+                    "humidity": { "type": "object" },
+                    "precipitation": { "type": "object" },
+                    "pressure": { "type": "object" },
+                    "temperature": { "type": "object" },
+                    "wind": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/data/3.0/onecall/overview": {
+      "get": {
+        "summary": "Weather overview",
+        "description": "Human-readable weather summary for today and tomorrow's forecast, using OpenWeather AI. Data available for today and tomorrow.",
+        "operationId": "getOverview",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -90, "maximum": 90 },
+            "description": "Latitude, decimal (-90; 90)"
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "float", "minimum": -180, "maximum": 180 },
+            "description": "Longitude, decimal (-180; 180)"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" },
+            "description": "Date in YYYY-MM-DD. Default: current date (by location timezone)"
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["standard", "metric", "imperial"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lat": { "type": "number" },
+                    "lon": { "type": "number" },
+                    "tz": { "type": "string" },
+                    "date": { "type": "string" },
+                    "units": { "type": "string" },
+                    "weather_overview": { "type": "string", "description": "AI-generated weather summary" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key",
+        "description": "API key in X-Api-Key header"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "400 – Bad Request. Missing or invalid parameters.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "401 – Unauthorized. Invalid or missing API key."
+      },
+      "NotFound": {
+        "description": "404 – Not Found. No data for requested parameters."
+      },
+      "TooManyRequests": {
+        "description": "429 – Too Many Requests. Quota exceeded."
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "cod": { "type": "integer", "example": 400 },
+          "message": { "type": "string" },
+          "parameters": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "WeatherCondition": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "main": { "type": "string" },
+          "description": { "type": "string" },
+          "icon": { "type": "string" }
+        }
+      },
+      "CurrentWeather": {
+        "type": "object",
+        "properties": {
+          "dt": { "type": "integer" },
+          "sunrise": { "type": "integer" },
+          "sunset": { "type": "integer" },
+          "temp": { "type": "number" },
+          "feels_like": { "type": "number" },
+          "pressure": { "type": "integer" },
+          "humidity": { "type": "integer" },
+          "dew_point": { "type": "number" },
+          "clouds": { "type": "integer" },
+          "uvi": { "type": "number" },
+          "visibility": { "type": "integer" },
+          "wind_speed": { "type": "number" },
+          "wind_gust": { "type": "number" },
+          "wind_deg": { "type": "integer" },
+          "rain": { "type": "object", "additionalProperties": { "type": "number" } },
+          "snow": { "type": "object", "additionalProperties": { "type": "number" } },
+          "weather": { "type": "array", "items": { "$ref": "#/components/schemas/WeatherCondition" } }
+        }
+      },
+      "Minutely": {
+        "type": "object",
+        "properties": {
+          "dt": { "type": "integer" },
+          "precipitation": { "type": "number" }
+        }
+      },
+      "Hourly": {
+        "type": "object",
+        "properties": {
+          "dt": { "type": "integer" },
+          "temp": { "type": "number" },
+          "feels_like": { "type": "number" },
+          "pressure": { "type": "integer" },
+          "humidity": { "type": "integer" },
+          "dew_point": { "type": "number" },
+          "uvi": { "type": "number" },
+          "clouds": { "type": "integer" },
+          "visibility": { "type": "integer" },
+          "wind_speed": { "type": "number" },
+          "wind_gust": { "type": "number" },
+          "wind_deg": { "type": "integer" },
+          "pop": { "type": "number" },
+          "rain": { "type": "object" },
+          "snow": { "type": "object" },
+          "weather": { "type": "array", "items": { "$ref": "#/components/schemas/WeatherCondition" } }
+        }
+      },
+      "Daily": {
+        "type": "object",
+        "properties": {
+          "dt": { "type": "integer" },
+          "sunrise": { "type": "integer" },
+          "sunset": { "type": "integer" },
+          "moonrise": { "type": "integer" },
+          "moonset": { "type": "integer" },
+          "moon_phase": { "type": "number" },
+          "summary": { "type": "string" },
+          "temp": { "type": "object" },
+          "feels_like": { "type": "object" },
+          "pressure": { "type": "integer" },
+          "humidity": { "type": "integer" },
+          "dew_point": { "type": "number" },
+          "wind_speed": { "type": "number" },
+          "wind_gust": { "type": "number" },
+          "wind_deg": { "type": "integer" },
+          "clouds": { "type": "integer" },
+          "uvi": { "type": "number" },
+          "pop": { "type": "number" },
+          "rain": { "type": "number" },
+          "snow": { "type": "number" },
+          "weather": { "type": "array", "items": { "$ref": "#/components/schemas/WeatherCondition" } }
+        }
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "sender_name": { "type": "string" },
+          "event": { "type": "string" },
+          "start": { "type": "integer" },
+          "end": { "type": "integer" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "TimemachineDataPoint": {
+        "type": "object",
+        "properties": {
+          "dt": { "type": "integer" },
+          "sunrise": { "type": "integer" },
+          "sunset": { "type": "integer" },
+          "temp": { "type": "number" },
+          "feels_like": { "type": "number" },
+          "pressure": { "type": "integer" },
+          "humidity": { "type": "integer" },
+          "dew_point": { "type": "number" },
+          "uvi": { "type": "number" },
+          "clouds": { "type": "integer" },
+          "visibility": { "type": "integer" },
+          "wind_speed": { "type": "number" },
+          "wind_gust": { "type": "number" },
+          "wind_deg": { "type": "integer" },
+          "weather": { "type": "array", "items": { "$ref": "#/components/schemas/WeatherCondition" } }
+        }
+      }
+    }
+  }
+}
