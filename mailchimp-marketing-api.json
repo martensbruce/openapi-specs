@@ -16,14 +16,8 @@
   },
   "servers": [
     {
-      "url": "https://{dc}.api.mailchimp.com/3.0",
-      "description": "Mailchimp Marketing API",
-      "variables": {
-        "dc": {
-          "default": "us1",
-          "description": "The data center prefix for your Mailchimp account. Obtain this from the OAuth metadata endpoint (https://login.mailchimp.com/oauth2/metadata) after authentication."
-        }
-      }
+      "url": "https://us1.api.mailchimp.com/3.0",
+      "description": "Mailchimp Marketing API, by default it uses the US1 region"
     }
   ],
   "security": [
