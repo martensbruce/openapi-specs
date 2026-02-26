@@ -1,0 +1,3141 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Exact Online REST API",
+    "description": "The Exact Online REST API provides programmatic access to Exact Online ERP/accounting data. It uses OData v2.0 conventions and OAuth 2.0 for authentication.\n\nKey capabilities include:\n- CRM management (accounts, contacts)\n- Financial administration (general ledger, journals)\n- Sales processing (orders, invoices)\n- Purchase management (purchase orders)\n- Logistics and inventory (items)\n- Cashflow and payments\n- Webhook subscriptions for real-time event notifications\n\nMost endpoints require a division parameter identifying which administration to access. Retrieve the current division via `/current/Me`. The default page size is 60 records; bulk and sync endpoints return up to 1000.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Exact Software",
+      "url": "https://www.exact.com/developers"
+    },
+    "license": {
+      "name": "Exact Online Terms of Use",
+      "url": "https://www.exact.com/terms"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://start.exactonline.nl/api/v1",
+      "description": "Netherlands"
+    },
+    {
+      "url": "https://start.exactonline.be/api/v1",
+      "description": "Belgium"
+    },
+    {
+      "url": "https://start.exactonline.de/api/v1",
+      "description": "Germany"
+    },
+    {
+      "url": "https://start.exactonline.co.uk/api/v1",
+      "description": "United Kingdom"
+    },
+    {
+      "url": "https://start.exactonline.com/api/v1",
+      "description": "United States"
+    },
+    {
+      "url": "https://start.exactonline.fr/api/v1",
+      "description": "France"
+    },
+    {
+      "url": "https://start.exactonline.es/api/v1",
+      "description": "Spain"
+    }
+  ],
+  "security": [
+    {
+      "exact_online_oauth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "System",
+      "description": "System endpoints for current user, divisions, and user management"
+    },
+    {
+      "name": "CRM",
+      "description": "Customer relationship management: accounts and contacts"
+    },
+    {
+      "name": "Financial",
+      "description": "Financial administration: general ledger accounts and journals"
+    },
+    {
+      "name": "Sales",
+      "description": "Sales processing: orders and invoices"
+    },
+    {
+      "name": "Purchase",
+      "description": "Purchase management: purchase order lines"
+    },
+    {
+      "name": "Logistics",
+      "description": "Logistics and inventory: items and item groups"
+    },
+    {
+      "name": "Cashflow",
+      "description": "Cashflow management: payments"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Webhook subscriptions for real-time event notifications"
+    }
+  ],
+  "paths": {
+    "/current/Me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get current authenticated user",
+        "description": "Returns profile information and division details for the currently authenticated user. Use `$select=CurrentDivision` to retrieve the division number required by most other endpoints.",
+        "tags": ["System"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SelectParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": {
+                      "type": "object",
+                      "properties": {
+                        "results": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/Me" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/{division}/system/Divisions": {
+      "get": {
+        "operationId": "getDivisions",
+        "summary": "List accessible divisions",
+        "description": "Returns divisions accessible to the authenticated user within the current license.",
+        "tags": ["System"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of divisions",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Division" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/{division}/system/AllDivisions": {
+      "get": {
+        "operationId": "getAllDivisions",
+        "summary": "List all divisions",
+        "description": "Returns all divisions across the license, including those not directly accessible to the authenticated user.",
+        "tags": ["System"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all divisions",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Division" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/system/Users": {
+      "get": {
+        "operationId": "getUsers",
+        "summary": "List system users",
+        "description": "Returns system users. This endpoint does not accept a division parameter; supplying one returns 501 Not Implemented.",
+        "tags": ["System"],
+        "parameters": [
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_User" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/{division}/crm/Accounts": {
+      "get": {
+        "operationId": "listAccounts",
+        "summary": "List accounts",
+        "description": "Returns CRM accounts (customers, suppliers, prospects). Scope: crm.accounts.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" },
+          { "$ref": "#/components/parameters/ExpandParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of accounts",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Account" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createAccount",
+        "summary": "Create an account",
+        "description": "Creates a new CRM account. The Name field is mandatory.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Account" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Account" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/crm/Accounts(guid'{id}')": {
+      "get": {
+        "operationId": "getAccount",
+        "summary": "Get an account",
+        "description": "Returns a single CRM account by its GUID.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" },
+          { "$ref": "#/components/parameters/SelectParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Account" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateAccount",
+        "summary": "Update an account",
+        "description": "Updates an existing CRM account.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Account" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Account" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAccount",
+        "summary": "Delete an account",
+        "description": "Deletes a CRM account by its GUID.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "Account deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/{division}/crm/Contacts": {
+      "get": {
+        "operationId": "listContacts",
+        "summary": "List contacts",
+        "description": "Returns CRM contacts. Each contact belongs to an account. Scope: crm.accounts.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of contacts",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Contact" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createContact",
+        "summary": "Create a contact",
+        "description": "Creates a new CRM contact. The Account field is mandatory.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Contact" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contact created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Contact" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/crm/Contacts(guid'{id}')": {
+      "get": {
+        "operationId": "getContact",
+        "summary": "Get a contact",
+        "description": "Returns a single CRM contact by its GUID.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" },
+          { "$ref": "#/components/parameters/SelectParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Contact" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateContact",
+        "summary": "Update a contact",
+        "description": "Updates an existing CRM contact.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Contact" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Contact" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteContact",
+        "summary": "Delete a contact",
+        "description": "Deletes a CRM contact by its GUID.",
+        "tags": ["CRM"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "Contact deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/{division}/financial/GLAccounts": {
+      "get": {
+        "operationId": "listGLAccounts",
+        "summary": "List general ledger accounts",
+        "description": "Returns general ledger accounts. Scope: financial.generalledger.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of GL accounts",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_GLAccount" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createGLAccount",
+        "summary": "Create a general ledger account",
+        "description": "Creates a new GL account. The Code field is mandatory.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GLAccount" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "GL account created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/GLAccount" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/financial/GLAccounts(guid'{id}')": {
+      "get": {
+        "operationId": "getGLAccount",
+        "summary": "Get a general ledger account",
+        "description": "Returns a single GL account by its GUID.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" },
+          { "$ref": "#/components/parameters/SelectParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "GL account details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/GLAccount" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateGLAccount",
+        "summary": "Update a general ledger account",
+        "description": "Updates an existing GL account.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GLAccount" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GL account updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/GLAccount" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGLAccount",
+        "summary": "Delete a general ledger account",
+        "description": "Deletes a GL account by its GUID.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "GL account deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/{division}/financial/Journals": {
+      "get": {
+        "operationId": "listJournals",
+        "summary": "List journals",
+        "description": "Returns financial journals. Scope: financial.generalledger.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of journals",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Journal" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createJournal",
+        "summary": "Create a journal",
+        "description": "Creates a new financial journal.",
+        "tags": ["Financial"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Journal" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Journal created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Journal" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/salesorder/SalesOrders": {
+      "get": {
+        "operationId": "listSalesOrders",
+        "summary": "List sales orders",
+        "description": "Returns sales orders. Available for Manufacturing and Wholesale & Distribution packages. Scope: sales.salesorders.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" },
+          { "$ref": "#/components/parameters/ExpandParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sales orders",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_SalesOrder" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createSalesOrder",
+        "summary": "Create a sales order",
+        "description": "Creates a new sales order. The SalesOrderLines array is mandatory when creating.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SalesOrder" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sales order created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/SalesOrder" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/salesorder/SalesOrders(guid'{id}')": {
+      "get": {
+        "operationId": "getSalesOrder",
+        "summary": "Get a sales order",
+        "description": "Returns a single sales order by its GUID.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/ExpandParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales order details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/SalesOrder" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateSalesOrder",
+        "summary": "Update a sales order",
+        "description": "Updates an existing sales order. SalesOrderLines is not required for updates.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SalesOrder" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sales order updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/SalesOrder" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSalesOrder",
+        "summary": "Delete a sales order",
+        "description": "Deletes a sales order by its GUID.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "Sales order deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/{division}/salesinvoice/SalesInvoices": {
+      "get": {
+        "operationId": "listSalesInvoices",
+        "summary": "List sales invoices",
+        "description": "Returns sales invoices. Scope: sales.salesinvoices.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" },
+          { "$ref": "#/components/parameters/ExpandParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sales invoices",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_SalesInvoice" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createSalesInvoice",
+        "summary": "Create a sales invoice",
+        "description": "Creates a new sales invoice. The SalesInvoiceLines array is mandatory when creating.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SalesInvoice" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sales invoice created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/SalesInvoice" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/salesinvoice/SalesInvoices(guid'{id}')": {
+      "get": {
+        "operationId": "getSalesInvoice",
+        "summary": "Get a sales invoice",
+        "description": "Returns a single sales invoice by its GUID.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/ExpandParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales invoice details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/SalesInvoice" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateSalesInvoice",
+        "summary": "Update a sales invoice",
+        "description": "Updates an existing sales invoice. SalesInvoiceLines is not required for updates.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SalesInvoice" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sales invoice updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/SalesInvoice" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSalesInvoice",
+        "summary": "Delete a sales invoice",
+        "description": "Deletes a sales invoice by its GUID.",
+        "tags": ["Sales"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "Sales invoice deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/{division}/purchaseorder/PurchaseOrderLines": {
+      "get": {
+        "operationId": "listPurchaseOrderLines",
+        "summary": "List purchase order lines",
+        "description": "Returns purchase order lines. Available for Manufacturing, Professional Services, and Wholesale & Distribution packages. Scope: purchase.purchaseorders.",
+        "tags": ["Purchase"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of purchase order lines",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_PurchaseOrderLine" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createPurchaseOrderLine",
+        "summary": "Create a purchase order line",
+        "description": "Creates a new purchase order line.",
+        "tags": ["Purchase"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PurchaseOrderLine" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Purchase order line created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/PurchaseOrderLine" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/logistics/Items": {
+      "get": {
+        "operationId": "listItems",
+        "summary": "List items",
+        "description": "Returns logistics items (products/services). Use the CustomDescriptionLanguage header for language-specific descriptions. Scope: logistics.items.",
+        "tags": ["Logistics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of items",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Item" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "operationId": "createItem",
+        "summary": "Create an item",
+        "description": "Creates a new logistics item.",
+        "tags": ["Logistics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Item" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Item" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/logistics/Items(guid'{id}')": {
+      "get": {
+        "operationId": "getItem",
+        "summary": "Get an item",
+        "description": "Returns a single logistics item by its GUID.",
+        "tags": ["Logistics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" },
+          { "$ref": "#/components/parameters/SelectParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Item" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateItem",
+        "summary": "Update an item",
+        "description": "Updates an existing logistics item.",
+        "tags": ["Logistics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Item" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/Item" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteItem",
+        "summary": "Delete an item",
+        "description": "Deletes a logistics item by its GUID.",
+        "tags": ["Logistics"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/GuidIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "Item deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/{division}/cashflow/Payments": {
+      "get": {
+        "operationId": "listPayments",
+        "summary": "List payments",
+        "description": "Returns cashflow payment records.",
+        "tags": ["Cashflow"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" },
+          { "$ref": "#/components/parameters/TopParam" },
+          { "$ref": "#/components/parameters/SkipParam" },
+          { "$ref": "#/components/parameters/OrderByParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of payments",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_Payment" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/{division}/subscription/Subscriptions": {
+      "get": {
+        "operationId": "listWebhookSubscriptions",
+        "summary": "List webhook subscriptions",
+        "description": "Returns active webhook subscriptions for the current application.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" },
+          { "$ref": "#/components/parameters/SelectParam" },
+          { "$ref": "#/components/parameters/FilterParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of webhook subscriptions",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ODataCollectionResponse_WebhookSubscription" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "operationId": "createWebhookSubscription",
+        "summary": "Create a webhook subscription",
+        "description": "Creates a new webhook subscription for receiving real-time notifications on resource changes.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DivisionParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WebhookSubscription" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": { "$ref": "#/components/schemas/WebhookSubscription" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "exact_online_oauth": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authorization code flow for Exact Online. Register your application at https://apps.exactonline.com/ to obtain a Client ID and Client Secret. Access tokens are valid for 600 seconds (10 minutes). Refresh tokens are valid for 1 year.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://start.exactonline.nl/api/oauth2/auth",
+            "tokenUrl": "https://start.exactonline.nl/api/oauth2/token",
+            "scopes": {
+              "crm.accounts": "Access CRM accounts and contacts",
+              "financial.generalledger": "Access general ledger accounts, journals, and chart of accounts",
+              "financial.accounting": "Access financial transactions, entries, and reporting",
+              "sales.salesorders": "Access sales orders and order lines",
+              "sales.salesinvoices": "Access sales invoices and invoice lines",
+              "purchase.purchaseorders": "Access purchase orders and order lines",
+              "logistics.items": "Access logistics items, item groups, and inventory",
+              "organization.workflow": "Access organization workflow, activities, and tasks"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "DivisionParam": {
+        "name": "division",
+        "in": "path",
+        "required": true,
+        "description": "The division number (administration) to access. Retrieve via `GET /current/Me?$select=CurrentDivision`.",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "example": 123456
+        }
+      },
+      "GuidIdParam": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The GUID identifier of the resource.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "SelectParam": {
+        "name": "$select",
+        "in": "query",
+        "required": false,
+        "description": "Comma-separated list of properties to include in the response.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "FilterParam": {
+        "name": "$filter",
+        "in": "query",
+        "required": false,
+        "description": "OData filter expression (e.g., `Name eq 'Acme'`, `Modified gt datetime'2024-01-01'`).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "TopParam": {
+        "name": "$top",
+        "in": "query",
+        "required": false,
+        "description": "Maximum number of records to return. Default is 60.",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "default": 60
+        }
+      },
+      "SkipParam": {
+        "name": "$skip",
+        "in": "query",
+        "required": false,
+        "description": "Number of records to skip for pagination.",
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "OrderByParam": {
+        "name": "$orderby",
+        "in": "query",
+        "required": false,
+        "description": "Comma-separated list of properties to sort by (e.g., `Name asc`, `Modified desc`).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ExpandParam": {
+        "name": "$expand",
+        "in": "query",
+        "required": false,
+        "description": "Navigation properties to expand inline (e.g., `SalesOrderLines`, `SalesInvoiceLines`).",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request -- invalid parameters, filter expression, or request body",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ODataError" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized -- invalid, expired, or missing access token",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ODataError" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden -- insufficient scope or permissions for the requested resource",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ODataError" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found -- the requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ODataError" }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ODataError" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Me": {
+        "type": "object",
+        "description": "Current authenticated user profile and division information",
+        "properties": {
+          "UserID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "CurrentDivision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Division number for use in API request URLs"
+          },
+          "FullName": {
+            "type": "string",
+            "description": "Full name of the user"
+          },
+          "FirstName": {
+            "type": "string",
+            "description": "First name"
+          },
+          "LastName": {
+            "type": "string",
+            "description": "Last name"
+          },
+          "Email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address"
+          },
+          "Gender": {
+            "type": "string",
+            "description": "M=Male, V=Female, O=Unknown",
+            "enum": ["M", "V", "O"]
+          },
+          "Initials": {
+            "type": "string",
+            "description": "User initials"
+          },
+          "EmployeeID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Employee ID"
+          },
+          "AccountingDivision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Accounting division number"
+          },
+          "DossierDivision": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Dossier division number"
+          },
+          "DivisionCustomer": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Owner account of the division"
+          },
+          "DivisionCustomerCode": {
+            "type": "string",
+            "description": "Owner account code of the division"
+          },
+          "DivisionCustomerName": {
+            "type": "string",
+            "description": "Owner account name of the division"
+          },
+          "DivisionCustomerVatNumber": {
+            "type": "string",
+            "description": "Owner account VAT number"
+          },
+          "DivisionCustomerSiretNumber": {
+            "type": "string",
+            "description": "Owner account SIRET number (French legislation)"
+          },
+          "CustomerCode": {
+            "type": "string",
+            "description": "Account code of the logged-in user"
+          },
+          "IsClientUser": {
+            "type": "boolean"
+          },
+          "IsEmployeeSelfServiceUser": {
+            "type": "boolean"
+          },
+          "IsMyFirmLiteUser": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Division": {
+        "type": "object",
+        "description": "An Exact Online division (administration/company)",
+        "properties": {
+          "Code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Division number"
+          },
+          "Description": {
+            "type": "string",
+            "description": "Division description"
+          },
+          "Customer": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Owner customer GUID"
+          },
+          "CustomerCode": {
+            "type": "string",
+            "description": "Owner customer code"
+          },
+          "CustomerName": {
+            "type": "string",
+            "description": "Owner customer name"
+          },
+          "Country": {
+            "type": "string",
+            "description": "Country code (ISO 3166-1 alpha-2)"
+          },
+          "Currency": {
+            "type": "string",
+            "description": "Default currency code (ISO 4217)"
+          },
+          "HID": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Human-readable division ID"
+          },
+          "Status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Division status"
+          },
+          "BlockingStatus": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Blocking status of the division"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "System user",
+        "properties": {
+          "UserID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "FullName": {
+            "type": "string",
+            "description": "Full name"
+          },
+          "FirstName": {
+            "type": "string",
+            "description": "First name"
+          },
+          "LastName": {
+            "type": "string",
+            "description": "Last name"
+          },
+          "Email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address"
+          },
+          "Customer": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Customer GUID the user belongs to (from CRM Accounts)"
+          },
+          "BirthDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date of birth"
+          },
+          "Gender": {
+            "type": "string",
+            "enum": ["M", "V", "O"]
+          },
+          "AuthenticationType": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Authentication method type"
+          },
+          "UserTypeCode": {
+            "type": "integer",
+            "format": "int32",
+            "description": "User type code that determines role and rights"
+          },
+          "ProfileCode": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Profile code for role-based filtering"
+          },
+          "UserDivisionList": {
+            "type": "string",
+            "description": "Comma-separated list of division codes the user can access"
+          },
+          "EndDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date after which the user is inactive"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Account": {
+        "type": "object",
+        "description": "CRM account representing a customer, supplier, or prospect",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Code": {
+            "type": "string",
+            "description": "Unique account code"
+          },
+          "Name": {
+            "type": "string",
+            "description": "Account name"
+          },
+          "Status": {
+            "type": "string",
+            "description": "Account status: C=Customer, S=Supplier, P=Prospect, N=None"
+          },
+          "Email": {
+            "type": "string",
+            "format": "email"
+          },
+          "Phone": {
+            "type": "string",
+            "description": "Main phone number"
+          },
+          "Fax": {
+            "type": "string"
+          },
+          "Website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "AddressLine1": {
+            "type": "string",
+            "description": "First address line"
+          },
+          "AddressLine2": {
+            "type": "string"
+          },
+          "AddressLine3": {
+            "type": "string"
+          },
+          "Postcode": {
+            "type": "string",
+            "description": "Postal/ZIP code"
+          },
+          "City": {
+            "type": "string"
+          },
+          "State": {
+            "type": "string"
+          },
+          "Country": {
+            "type": "string",
+            "description": "Country code (ISO 3166-1 alpha-2)"
+          },
+          "ChamberOfCommerce": {
+            "type": "string",
+            "description": "Chamber of commerce number"
+          },
+          "VATNumber": {
+            "type": "string",
+            "description": "VAT identification number"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Division code"
+          },
+          "AccountManager": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account manager GUID"
+          },
+          "AccountManagerFullName": {
+            "type": "string"
+          },
+          "Accountant": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Accountant GUID reference"
+          },
+          "BankAccountCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "IsSupplier": {
+            "type": "boolean"
+          },
+          "IsReseller": {
+            "type": "boolean"
+          },
+          "IsAccountant": {
+            "type": "boolean"
+          },
+          "IsCompetitor": {
+            "type": "boolean"
+          },
+          "IsSales": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "IsPurchase": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "GLAccountSales": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GL account for sales"
+          },
+          "GLAccountPurchase": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GL account for purchases"
+          },
+          "Currency": {
+            "type": "string",
+            "description": "Default currency (ISO 4217)"
+          },
+          "Language": {
+            "type": "string",
+            "description": "Language code"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Creator": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modifier": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "description": "CRM contact belonging to an account",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Account": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account GUID the contact belongs to (mandatory)"
+          },
+          "AccountName": {
+            "type": "string",
+            "description": "Name of the associated account",
+            "readOnly": true
+          },
+          "AccountMainContact": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Main contact of the account"
+          },
+          "FirstName": {
+            "type": "string"
+          },
+          "LastName": {
+            "type": "string"
+          },
+          "FullName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Title": {
+            "type": "string"
+          },
+          "Initials": {
+            "type": "string"
+          },
+          "Gender": {
+            "type": "string",
+            "enum": ["M", "V", "O"]
+          },
+          "Email": {
+            "type": "string",
+            "format": "email"
+          },
+          "Phone": {
+            "type": "string"
+          },
+          "PhoneExtension": {
+            "type": "string"
+          },
+          "Mobile": {
+            "type": "string"
+          },
+          "JobTitleDescription": {
+            "type": "string"
+          },
+          "AddressStreet": {
+            "type": "string"
+          },
+          "AddressStreetNumber": {
+            "type": "string"
+          },
+          "Postcode": {
+            "type": "string"
+          },
+          "City": {
+            "type": "string"
+          },
+          "Country": {
+            "type": "string",
+            "description": "Country code (ISO 3166-1 alpha-2)"
+          },
+          "BirthDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "BirthName": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "IsMainContact": {
+            "type": "boolean"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GLAccount": {
+        "type": "object",
+        "description": "General ledger account",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Code": {
+            "type": "string",
+            "description": "Unique code of the GL account (mandatory)"
+          },
+          "Description": {
+            "type": "string",
+            "description": "Account description"
+          },
+          "BalanceSide": {
+            "type": "string",
+            "description": "D=Debit, C=Credit",
+            "enum": ["D", "C"]
+          },
+          "BalanceType": {
+            "type": "string",
+            "description": "B=Balance Sheet, W=Profit & Loss",
+            "enum": ["B", "W"]
+          },
+          "Type": {
+            "type": "integer",
+            "format": "int32",
+            "description": "GL account type (e.g., 12=Cash/Bank, 20=Revenue, 30=Other expenses)"
+          },
+          "TypeDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Costcenter": {
+            "type": "string"
+          },
+          "CostcenterDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Costunit": {
+            "type": "string"
+          },
+          "CostunitDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "AllowCostsInSales": {
+            "type": "boolean"
+          },
+          "Compress": {
+            "type": "boolean",
+            "description": "Whether transactions are compressed in reports"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "VATCode": {
+            "type": "string"
+          },
+          "VATDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Journal": {
+        "type": "object",
+        "description": "Financial journal",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Code": {
+            "type": "string",
+            "description": "Unique journal code"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Type": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Journal type (e.g., 10=Cash, 12=Bank, 20=Sales, 22=Purchase, 70=Opening balance, 90=General)"
+          },
+          "TypeDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Currency": {
+            "type": "string",
+            "description": "Default currency (ISO 4217)"
+          },
+          "GLAccount": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Linked GL account GUID"
+          },
+          "GLAccountCode": {
+            "type": "string",
+            "readOnly": true
+          },
+          "GLAccountDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "GLAccountType": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "BankAccountBICCode": {
+            "type": "string"
+          },
+          "BankAccountIBAN": {
+            "type": "string"
+          },
+          "BankName": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "AllowVariableCurrency": {
+            "type": "boolean"
+          },
+          "AllowVariableExchangeRate": {
+            "type": "boolean"
+          },
+          "AllowVAT": {
+            "type": "boolean"
+          },
+          "AutoSave": {
+            "type": "boolean"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SalesOrder": {
+        "type": "object",
+        "description": "Sales order with order lines",
+        "properties": {
+          "OrderID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "OrderNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Human-readable order number"
+          },
+          "OrderDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "DeliveryDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "OrderedBy": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Customer account GUID"
+          },
+          "OrderedByName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "OrderedByContactPerson": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "OrderedByContactPersonFullName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "DeliverTo": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Delivery account GUID"
+          },
+          "DeliverToName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "InvoiceTo": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Invoice-to account GUID"
+          },
+          "InvoiceToName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Currency": {
+            "type": "string",
+            "description": "Currency code (ISO 4217)"
+          },
+          "AmountDC": {
+            "type": "number",
+            "format": "double",
+            "description": "Total amount in default currency",
+            "readOnly": true
+          },
+          "AmountFC": {
+            "type": "number",
+            "format": "double",
+            "description": "Total amount in foreign currency",
+            "readOnly": true
+          },
+          "AmountDiscount": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "AmountDiscountExclVat": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "Status": {
+            "type": "integer",
+            "format": "int16",
+            "description": "Order status"
+          },
+          "StatusDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ApprovalStatus": {
+            "type": "integer",
+            "format": "int16",
+            "description": "0=Awaiting approval, 1=Automatically approved, 2=Approved"
+          },
+          "ApprovalStatusDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Description": {
+            "type": "string"
+          },
+          "YourRef": {
+            "type": "string",
+            "description": "Customer reference"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "SalesOrderLines": {
+            "type": "array",
+            "description": "Order lines (mandatory on POST, optional on PUT)",
+            "items": { "$ref": "#/components/schemas/SalesOrderLine" }
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Creator": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modifier": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SalesOrderLine": {
+        "type": "object",
+        "description": "Individual line item within a sales order",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "OrderID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent order GUID"
+          },
+          "OrderNumber": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "LineNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Item": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item GUID"
+          },
+          "ItemCode": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ItemDescription": {
+            "type": "string"
+          },
+          "Quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "UnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "Discount": {
+            "type": "number",
+            "format": "double",
+            "description": "Discount percentage (0-1)"
+          },
+          "AmountDC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "AmountFC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATCode": {
+            "type": "string"
+          },
+          "VATPercentage": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATAmount": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "DeliveryDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "CostCenter": {
+            "type": "string"
+          },
+          "CostUnit": {
+            "type": "string"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SalesInvoice": {
+        "type": "object",
+        "description": "Sales invoice with invoice lines",
+        "properties": {
+          "InvoiceID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "InvoiceNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "InvoiceDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "DueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "InvoiceTo": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Invoice-to customer account GUID"
+          },
+          "InvoiceToName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "InvoiceToContactPerson": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "InvoiceToContactPersonFullName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "OrderedBy": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Ordering customer account GUID"
+          },
+          "OrderedByName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Currency": {
+            "type": "string",
+            "description": "Currency code (ISO 4217)"
+          },
+          "AmountDC": {
+            "type": "number",
+            "format": "double",
+            "description": "Total in default currency",
+            "readOnly": true
+          },
+          "AmountFC": {
+            "type": "number",
+            "format": "double",
+            "description": "Total in foreign currency including VAT",
+            "readOnly": true
+          },
+          "AmountFCExclVat": {
+            "type": "number",
+            "format": "double",
+            "description": "Total in foreign currency excluding VAT",
+            "readOnly": true
+          },
+          "AmountDiscount": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATAmountDC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATAmountFC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "Status": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "StatusDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "Description": {
+            "type": "string"
+          },
+          "YourRef": {
+            "type": "string",
+            "description": "Customer reference"
+          },
+          "Journal": {
+            "type": "string",
+            "description": "Journal code"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "DivisionCompanyName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "DivisionLabel": {
+            "type": "string",
+            "readOnly": true
+          },
+          "SalesInvoiceLines": {
+            "type": "array",
+            "description": "Invoice lines (mandatory on POST, optional on PUT)",
+            "items": { "$ref": "#/components/schemas/SalesInvoiceLine" }
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Creator": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modifier": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SalesInvoiceLine": {
+        "type": "object",
+        "description": "Individual line item within a sales invoice",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "InvoiceID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent invoice GUID"
+          },
+          "InvoiceNumber": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "LineNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Item": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item GUID"
+          },
+          "ItemCode": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ItemDescription": {
+            "type": "string"
+          },
+          "Quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "UnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "Discount": {
+            "type": "number",
+            "format": "double"
+          },
+          "AmountDC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "AmountFC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATCode": {
+            "type": "string"
+          },
+          "VATPercentage": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATAmountDC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATAmountFC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "GLAccount": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "GLAccountDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "CostCenter": {
+            "type": "string"
+          },
+          "CostUnit": {
+            "type": "string"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PurchaseOrderLine": {
+        "type": "object",
+        "description": "Purchase order line item",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "PurchaseOrderID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent purchase order GUID"
+          },
+          "PurchaseOrderNumber": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "LineNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Item": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item GUID"
+          },
+          "ItemCode": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ItemDescription": {
+            "type": "string"
+          },
+          "Quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "QuantityInMemos": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "QuantityReceived": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "UnitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "Discount": {
+            "type": "number",
+            "format": "double"
+          },
+          "AmountDC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "AmountFC": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATCode": {
+            "type": "string"
+          },
+          "VATPercentage": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "VATAmount": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "ReceiptDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Supplier": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "SupplierName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "CostCenter": {
+            "type": "string"
+          },
+          "CostUnit": {
+            "type": "string"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "description": "Logistics item (product or service)",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Code": {
+            "type": "string",
+            "description": "Item identification code"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Barcode": {
+            "type": "string"
+          },
+          "Type": {
+            "type": "string",
+            "description": "Item type"
+          },
+          "IsSalesItem": {
+            "type": "boolean"
+          },
+          "IsPurchaseItem": {
+            "type": "boolean"
+          },
+          "IsStockItem": {
+            "type": "boolean"
+          },
+          "IsWebshopItem": {
+            "type": "boolean"
+          },
+          "ItemGroup": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Item group GUID"
+          },
+          "ItemGroupCode": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ItemGroupDescription": {
+            "type": "string",
+            "readOnly": true
+          },
+          "SalesPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "PurchasePrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "CostPriceCurrency": {
+            "type": "string"
+          },
+          "CostPriceStandard": {
+            "type": "number",
+            "format": "double"
+          },
+          "AverageCost": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "GLCosts": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GL account for item costs"
+          },
+          "GLRevenue": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GL account for item revenue"
+          },
+          "GLStock": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GL account for stock"
+          },
+          "GLPurchaseAccount": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GL account for purchase invoicing"
+          },
+          "Unit": {
+            "type": "string",
+            "description": "Unit of measure"
+          },
+          "Stock": {
+            "type": "number",
+            "format": "double",
+            "description": "Current stock level",
+            "readOnly": true
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Creator": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modifier": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "description": "Cashflow payment record",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Account": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account GUID"
+          },
+          "AccountCode": {
+            "type": "string",
+            "readOnly": true
+          },
+          "AccountName": {
+            "type": "string",
+            "readOnly": true
+          },
+          "InvoiceNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "InvoiceDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "DueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "PaymentDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "AmountDC": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount in default currency"
+          },
+          "AmountFC": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount in foreign currency"
+          },
+          "AmountDiscountDC": {
+            "type": "number",
+            "format": "double"
+          },
+          "AmountDiscountFC": {
+            "type": "number",
+            "format": "double"
+          },
+          "Currency": {
+            "type": "string"
+          },
+          "PaymentMethod": {
+            "type": "string"
+          },
+          "PaymentReference": {
+            "type": "string"
+          },
+          "Status": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "YourRef": {
+            "type": "string"
+          },
+          "Journal": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WebhookSubscription": {
+        "type": "object",
+        "description": "Webhook subscription for receiving real-time notifications",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Primary key"
+          },
+          "Topic": {
+            "type": "string",
+            "description": "Resource topic to subscribe to (e.g., 'Accounts', 'SalesInvoices', 'Items')"
+          },
+          "CallbackURL": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL that receives webhook POST notifications"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Division": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "Created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Creator": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "Modified": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ODataError": {
+        "type": "object",
+        "description": "Standard OData error response",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code"
+              },
+              "message": {
+                "type": "object",
+                "properties": {
+                  "lang": {
+                    "type": "string",
+                    "description": "Language tag (e.g., en-US)"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Human-readable error message"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_Division": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Division" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL for the next page of results"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_User": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/User" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_Account": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Account" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_Contact": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Contact" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_GLAccount": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/GLAccount" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_Journal": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Journal" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_SalesOrder": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SalesOrder" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_SalesInvoice": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SalesInvoice" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_PurchaseOrderLine": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PurchaseOrderLine" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_Item": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Item" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_Payment": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Payment" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "ODataCollectionResponse_WebhookSubscription": {
+        "type": "object",
+        "properties": {
+          "d": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/WebhookSubscription" }
+              },
+              "__next": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
