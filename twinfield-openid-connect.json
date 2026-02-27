@@ -1,0 +1,432 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Twinfield OpenID Connect / OAuth 2.0",
+    "description": "OpenID Connect identity layer and OAuth 2.0 authentication for Twinfield accounting software.\n\nTwinfield implements OpenID Connect for identity verification and OAuth 2.0 for token-based authentication. Register your application at the Twinfield developer portal (https://developers.twinfield.com) to obtain a Client ID and optional Client Secret.\n\nSupported flows:\n- **Authorization Code** -- for applications with a server-side backend (recommended). Requires client secret. Supports refresh tokens via the `offline_access` scope.\n- **Implicit** -- for native and JavaScript-based clients. No client secret required.\n\nAfter obtaining an access token, call the `accesstokenvalidation` endpoint to retrieve the `twf.clusterUrl` claim, which identifies the cluster URL for subsequent SOAP/API calls (e.g., `https://api.<cluster>.twinfield.com`).\n\nToken lifetimes:\n- Implicit flow access token: 43,200 seconds (12 hours)\n- Authorization code: 300 seconds (5 minutes)\n- Authorization code access token: 3,600 seconds (1 hour)\n- Refresh token: 788,940,000 seconds (25 years)",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Twinfield Developer Portal",
+      "url": "https://developers.twinfield.com"
+    },
+    "license": {
+      "name": "Wolters Kluwer Terms",
+      "url": "https://www.wolterskluwer.com/en/solutions/twinfield"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://login.twinfield.com",
+      "description": "Twinfield Login / Identity Server"
+    }
+  ],
+  "security": [
+    {
+      "twinfield_oidc": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Authorization and token exchange endpoints for OAuth 2.0 / OpenID Connect"
+    },
+    {
+      "name": "Validation",
+      "description": "Access token validation and cluster URL discovery"
+    },
+    {
+      "name": "UserInfo",
+      "description": "OpenID Connect UserInfo endpoint for retrieving identity claims"
+    }
+  ],
+  "paths": {
+    "/auth/authentication/connect/authorize": {
+      "get": {
+        "operationId": "authorize",
+        "summary": "Authorize (OpenID Connect)",
+        "description": "Initiates the OAuth 2.0 authorization flow. For the authorization code flow, set `response_type=code`. For the implicit flow, set `response_type=id_token+token`.\n\nThe user is redirected to the Twinfield login screen. After authentication and consent, the browser redirects to `redirect_uri` with either an authorization code (code flow) or tokens in the URL fragment (implicit flow).\n\nThe `twf.organisationUser` scope is mandatory for login.",
+        "tags": ["Authentication"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "The Client ID obtained from the Twinfield developer portal.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "description": "The registered redirect URI for your application.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "required": true,
+            "description": "The desired response type. Use `code` for authorization code flow or `id_token token` for implicit flow.",
+            "schema": {
+              "type": "string",
+              "enum": ["code", "id_token token"]
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": true,
+            "description": "Space-delimited list of scopes. Must include `openid` and `twf.organisationUser`. Add `offline_access` for refresh tokens (code flow only).",
+            "schema": {
+              "type": "string",
+              "example": "openid twf.user twf.organisation twf.organisationUser offline_access"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "description": "An opaque value used to maintain state between the request and callback. Used for CSRF protection.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nonce",
+            "in": "query",
+            "required": true,
+            "description": "A random string used to associate the client session with the ID token and to mitigate replay attacks.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Twinfield login screen. After authentication, redirects to `redirect_uri` with either:\n- **Code flow**: `?code=<authorization_code>&state=<state>&session_state=<session_state>`\n- **Implicit flow**: `#id_token=<id_token>&access_token=<access_token>&token_type=Bearer&expires_in=<seconds>&scope=<scopes>&state=<state>&session_state=<session_state>`",
+            "headers": {
+              "Location": {
+                "description": "Twinfield login page URL",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters (e.g., unknown client_id, invalid redirect_uri)"
+          }
+        }
+      }
+    },
+    "/auth/authentication/connect/token": {
+      "post": {
+        "operationId": "exchangeToken",
+        "summary": "Exchange or refresh tokens",
+        "description": "Exchanges an authorization code for tokens, or refreshes an expired access token using a refresh token.\n\nUses HTTP Basic authentication with your Client ID and Client Secret encoded as `Base64(<client_id>:<client_secret>)` in the Authorization header.\n\n**Authorization code exchange**: Set `grant_type=authorization_code`, provide `code` and `redirect_uri`.\n**Token refresh**: Set `grant_type=refresh_token`, provide `refresh_token`.\n\nToken lifetimes:\n- Access token: 3,600 seconds (1 hour)\n- Refresh token: 788,940,000 seconds (25 years)",
+        "tags": ["Authentication"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "HTTP Basic authentication: `Basic Base64(<client_id>:<client_secret>)`",
+            "schema": {
+              "type": "string",
+              "example": "Basic SURfT0ZfT0FVVEhfQ0xJRU5UOkNMSUVOVF9TRUNSRVQ="
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "description": "The grant type. Use `authorization_code` to exchange a code, or `refresh_token` to refresh.",
+                    "enum": ["authorization_code", "refresh_token"]
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The authorization code received from the authorize endpoint. Required when `grant_type=authorization_code`."
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Must match the redirect_uri used in the authorize request. Required when `grant_type=authorization_code`."
+                  },
+                  "refresh_token": {
+                    "type": "string",
+                    "description": "The refresh token. Required when `grant_type=refresh_token`."
+                  }
+                },
+                "required": ["grant_type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token response. When using `authorization_code` grant, includes `id_token`, `access_token`, and optionally `refresh_token`. When refreshing, returns a new `access_token` and `refresh_token`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token request failed. See error codes in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/authentication/connect/accesstokenvalidation": {
+      "get": {
+        "operationId": "validateAccessToken",
+        "summary": "Validate access token and discover cluster",
+        "description": "Validates an access token and returns its claims. The response includes `twf.clusterUrl`, which is the base URL for the Twinfield API cluster (e.g., `https://api.<cluster>.twinfield.com`). You must use this cluster URL for all subsequent SOAP/API web service calls.",
+        "tags": ["Validation"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "The access token to validate.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token is valid. Returns claims including the cluster URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenValidationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token is invalid or expired."
+          }
+        }
+      }
+    },
+    "/auth/authentication/connect/userinfo": {
+      "get": {
+        "operationId": "getUserInfo",
+        "summary": "Get user identity claims",
+        "description": "Standard OpenID Connect UserInfo endpoint. Returns identity claims about the authenticated user based on the scopes granted during authorization.\n\nRequires a valid access token in the Authorization header.",
+        "tags": ["UserInfo"],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "Bearer token: `Bearer <access_token>`",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJ0eXAi..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User identity claims based on the granted scopes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized -- invalid or expired access token."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "twinfield_oidc": {
+        "type": "oauth2",
+        "description": "OpenID Connect / OAuth 2.0 authentication for Twinfield. Register your application at the Twinfield developer portal to obtain a Client ID and Client Secret. The `twf.organisationUser` scope is mandatory for login. Add `offline_access` to enable refresh tokens.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.twinfield.com/auth/authentication/connect/authorize",
+            "tokenUrl": "https://login.twinfield.com/auth/authentication/connect/token",
+            "scopes": {
+              "openid": "Standard OpenID Connect scope (required)",
+              "twf.user": "Twinfield user identity: twf.id (user GUID), twf.organisationUserCode, twf.organisationId",
+              "twf.organisation": "Organisation info: twf.organisationCode, twf.organisationId, twf.clusterUrl",
+              "twf.organisationUser": "Organisation user info: twf.organisationUserCode, twf.organisationCode, twf.organisationId (mandatory for login)",
+              "offline_access": "Enables refresh tokens for long-lived access"
+            }
+          },
+          "implicit": {
+            "authorizationUrl": "https://login.twinfield.com/auth/authentication/connect/authorize",
+            "scopes": {
+              "openid": "Standard OpenID Connect scope (required)",
+              "twf.user": "Twinfield user identity: twf.id (user GUID), twf.organisationUserCode, twf.organisationId",
+              "twf.organisation": "Organisation info: twf.organisationCode, twf.organisationId, twf.clusterUrl",
+              "twf.organisationUser": "Organisation user info: twf.organisationUserCode, twf.organisationCode, twf.organisationId (mandatory for login)"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "TokenResponse": {
+        "type": "object",
+        "description": "Successful token response from the token endpoint",
+        "properties": {
+          "id_token": {
+            "type": "string",
+            "description": "JWT containing identity claims. Present when exchanging an authorization code (not on refresh)."
+          },
+          "access_token": {
+            "type": "string",
+            "description": "Bearer access token for authenticating API requests. Valid for 3,600 seconds (1 hour) in authorization code flow, or 43,200 seconds (12 hours) in implicit flow."
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token lifetime in seconds.",
+            "example": 3600
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Token type, always `Bearer`.",
+            "enum": ["Bearer"]
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Refresh token for obtaining new access tokens. Only present if `offline_access` scope was requested. Valid for 788,940,000 seconds (approximately 25 years)."
+          }
+        },
+        "required": ["access_token", "expires_in", "token_type"]
+      },
+      "TokenErrorResponse": {
+        "type": "object",
+        "description": "Error response from the token endpoint",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code indicating the type of failure.",
+            "enum": ["invalid_grant", "unsupported_grant_type", "invalid_request"]
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable description of the error."
+          }
+        },
+        "required": ["error"]
+      },
+      "TokenValidationResponse": {
+        "type": "object",
+        "description": "Claims returned when validating an access token. The `twf.clusterUrl` claim is essential for determining which cluster to send API requests to.",
+        "properties": {
+          "twf.clusterUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Base URL of the Twinfield API cluster for this user's organisation (e.g., `https://api.accounting.twinfield.com`). Use this URL for all subsequent web service calls.",
+            "example": "https://api.accounting.twinfield.com"
+          },
+          "twf.organisationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GUID of the Twinfield organisation."
+          },
+          "twf.organisationCode": {
+            "type": "string",
+            "description": "Code of the organisation."
+          },
+          "twf.organisationUserCode": {
+            "type": "string",
+            "description": "User code within the organisation."
+          },
+          "twf.id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GUID of the Twinfield ID (if available)."
+          },
+          "sub": {
+            "type": "string",
+            "description": "Subject identifier for the authenticated user."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Space-delimited list of scopes granted to the token."
+          },
+          "exp": {
+            "type": "integer",
+            "description": "Token expiration time (Unix timestamp)."
+          },
+          "iss": {
+            "type": "string",
+            "description": "Token issuer URL."
+          },
+          "aud": {
+            "type": "string",
+            "description": "Audience the token was issued for (Client ID)."
+          }
+        }
+      },
+      "UserInfoResponse": {
+        "type": "object",
+        "description": "OpenID Connect UserInfo response. Claims returned depend on the scopes granted during authorization.",
+        "properties": {
+          "sub": {
+            "type": "string",
+            "description": "Subject identifier for the authenticated user."
+          },
+          "twf.id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GUID of the Twinfield ID. Requires `twf.user` scope."
+          },
+          "twf.organisationUserCode": {
+            "type": "string",
+            "description": "User code within the organisation. Requires `twf.user` or `twf.organisationUser` scope."
+          },
+          "twf.organisationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "GUID of the organisation. Requires `twf.user`, `twf.organisation`, or `twf.organisationUser` scope."
+          },
+          "twf.organisationCode": {
+            "type": "string",
+            "description": "Code of the organisation. Requires `twf.organisation` or `twf.organisationUser` scope."
+          },
+          "twf.clusterUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the cluster on which the organisation is located. Requires `twf.organisation` scope."
+          }
+        }
+      }
+    }
+  }
+}
