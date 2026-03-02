@@ -1,0 +1,4062 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Anaplan Integration API",
+    "description": "The Anaplan Integration API v2.0 provides programmatic access to Anaplan models for data integration. It is a RESTful API using resource-oriented URLs, standard HTTP methods, and JSON-formatted responses.\n\nThis specification covers:\n- Bulk APIs for importing, exporting, and processing model data\n- Transactional APIs for list item management and model metadata\n- File management for uploading and downloading data\n- Workspace and model administration\n\nAuthentication is supported via OAuth 2.0 (Authorization Code and Device Grant flows), Basic Authentication (username/password), and CA Certificate authentication. All methods produce an Anaplan auth token used in subsequent API calls.\n\nBase URL: https://api.anaplan.com/2/0\nAuth URL: https://auth.anaplan.com",
+    "version": "2.0",
+    "contact": {
+      "name": "Anaplan Developer Support",
+      "url": "https://help.anaplan.com",
+      "email": "support@anaplan.com"
+    },
+    "license": {
+      "name": "Anaplan Terms of Service",
+      "url": "https://www.anaplan.com/terms-of-use/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.anaplan.com/2/0",
+      "description": "Anaplan Integration API v2 (Production)"
+    },
+    {
+      "url": "https://auth.anaplan.com",
+      "description": "Anaplan Authentication Service"
+    },
+    {
+      "url": "https://us1a.app.anaplan.com",
+      "description": "Anaplan OAuth 2.0 Authorization Server (US1a region)"
+    }
+  ],
+  "security": [
+    {
+      "anaplan_auth_token": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Obtain and refresh Anaplan authentication tokens via Basic Auth or CA Certificate"
+    },
+    {
+      "name": "OAuth2",
+      "description": "OAuth 2.0 authorization flows including Authorization Code and Device Grant"
+    },
+    {
+      "name": "Workspaces",
+      "description": "List and retrieve workspace information"
+    },
+    {
+      "name": "Models",
+      "description": "List, retrieve, and manage Anaplan models including status, calendar, and versions"
+    },
+    {
+      "name": "Modules",
+      "description": "Retrieve modules and module metadata within models"
+    },
+    {
+      "name": "Views",
+      "description": "Retrieve views, view metadata, and read cell data"
+    },
+    {
+      "name": "Line Items",
+      "description": "Retrieve line items and their metadata within models and modules"
+    },
+    {
+      "name": "Dimensions",
+      "description": "Retrieve dimensions and dimension items"
+    },
+    {
+      "name": "Lists",
+      "description": "Retrieve, add, update, and delete list items within models"
+    },
+    {
+      "name": "Files",
+      "description": "Upload and download files used in import/export operations"
+    },
+    {
+      "name": "Imports",
+      "description": "List import definitions, run import actions, and monitor import tasks"
+    },
+    {
+      "name": "Exports",
+      "description": "List export definitions, run export actions, and monitor export tasks"
+    },
+    {
+      "name": "Actions",
+      "description": "List and retrieve available actions in a model"
+    },
+    {
+      "name": "Processes",
+      "description": "List process definitions, run processes, and monitor process tasks"
+    },
+    {
+      "name": "Delete Actions",
+      "description": "List delete action definitions, run delete actions, and monitor tasks"
+    }
+  ],
+  "paths": {
+    "/token/authenticate": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Obtain an authentication token",
+        "description": "Authenticates using Basic Auth (username:password base64-encoded) or CA Certificate and returns an Anaplan auth token valid for 35 minutes.",
+        "operationId": "authenticateToken",
+        "servers": [
+          {
+            "url": "https://auth.anaplan.com",
+            "description": "Anaplan Authentication Service"
+          }
+        ],
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Optional body for CA Certificate authentication. Omit for Basic Auth.",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertificateAuthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/token/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Refresh an authentication token",
+        "description": "Refreshes an existing Anaplan auth token before it expires (35-minute validity). Send the current token in the Authorization header as AnaplanAuthToken {token}.",
+        "operationId": "refreshToken",
+        "servers": [
+          {
+            "url": "https://auth.anaplan.com",
+            "description": "Anaplan Authentication Service"
+          }
+        ],
+        "security": [
+          {
+            "anaplan_auth_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token expired or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/token/validate": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Validate an authentication token",
+        "description": "Validates whether the current Anaplan auth token is still active.",
+        "operationId": "validateToken",
+        "servers": [
+          {
+            "url": "https://auth.anaplan.com",
+            "description": "Anaplan Authentication Service"
+          }
+        ],
+        "security": [
+          {
+            "anaplan_auth_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenValidationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is invalid or expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/token/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Invalidate an authentication token",
+        "description": "Logs out and invalidates the current Anaplan auth token.",
+        "operationId": "logoutToken",
+        "servers": [
+          {
+            "url": "https://auth.anaplan.com",
+            "description": "Anaplan Authentication Service"
+          }
+        ],
+        "security": [
+          {
+            "anaplan_auth_token": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token invalidated successfully"
+          },
+          "401": {
+            "description": "Token already invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oauth/authorize": {
+      "get": {
+        "tags": ["OAuth2"],
+        "summary": "OAuth 2.0 Authorization endpoint",
+        "description": "Initiates the OAuth 2.0 Authorization Code flow. Redirects the user to the Anaplan login page to authorize the application.",
+        "operationId": "oauthAuthorize",
+        "servers": [
+          {
+            "url": "https://us1a.app.anaplan.com",
+            "description": "Anaplan OAuth 2.0 Authorization Server"
+          }
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "response_type",
+            "in": "query",
+            "required": true,
+            "description": "Must be 'code' for authorization code flow.",
+            "schema": {
+              "type": "string",
+              "enum": ["code"]
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "The OAuth 2.0 client ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "description": "The callback URL registered with the OAuth client.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "Space-separated list of scopes (openid, profile, email, offline_access).",
+            "schema": {
+              "type": "string",
+              "example": "openid profile email offline_access"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "description": "Opaque value to maintain state between request and callback for CSRF protection.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Anaplan login page"
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "tags": ["OAuth2"],
+        "summary": "OAuth 2.0 Token endpoint",
+        "description": "Exchanges an authorization code for an access token, or refreshes an existing token.",
+        "operationId": "oauthToken",
+        "servers": [
+          {
+            "url": "https://us1a.app.anaplan.com",
+            "description": "Anaplan OAuth 2.0 Authorization Server"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "enum": ["authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+                    "description": "The OAuth 2.0 grant type."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The authorization code received from the authorize endpoint. Required for authorization_code grant."
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The redirect URI used in the authorization request. Required for authorization_code grant."
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "The OAuth 2.0 client ID."
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "The OAuth 2.0 client secret."
+                  },
+                  "refresh_token": {
+                    "type": "string",
+                    "description": "The refresh token. Required for refresh_token grant."
+                  },
+                  "device_code": {
+                    "type": "string",
+                    "description": "The device code. Required for device_code grant."
+                  }
+                },
+                "required": ["grant_type", "client_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid grant or request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid client credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oauth/device/code": {
+      "post": {
+        "tags": ["OAuth2"],
+        "summary": "OAuth 2.0 Device Authorization endpoint",
+        "description": "Initiates the device authorization flow for devices without browsers or with limited input capability. Returns a device code and user code for the user to authorize on a separate device.",
+        "operationId": "oauthDeviceCode",
+        "servers": [
+          {
+            "url": "https://us1a.app.anaplan.com",
+            "description": "Anaplan OAuth 2.0 Authorization Server"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client_id": {
+                    "type": "string",
+                    "description": "The OAuth 2.0 client ID."
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Space-separated list of scopes.",
+                    "example": "openid profile email offline_access"
+                  }
+                },
+                "required": ["client_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Device authorization response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceAuthorizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "tags": ["Workspaces"],
+        "summary": "List workspaces",
+        "description": "Returns a list of workspaces the authenticated user has access to.",
+        "operationId": "listWorkspaces",
+        "parameters": [
+          {
+            "name": "tenantDetails",
+            "in": "query",
+            "required": false,
+            "description": "Include tenant details in the response.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}": {
+      "get": {
+        "tags": ["Workspaces"],
+        "summary": "Get workspace details",
+        "description": "Returns details for a specific workspace.",
+        "operationId": "getWorkspace",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "List models in a workspace",
+        "description": "Returns a list of models in the specified workspace.",
+        "operationId": "listModels",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "Get model details",
+        "description": "Returns details for a specific model in a workspace.",
+        "operationId": "getModel",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "List all models",
+        "description": "Returns a list of all models across all workspaces the authenticated user has access to.",
+        "operationId": "listAllModels",
+        "parameters": [
+          {
+            "name": "modelDetails",
+            "in": "query",
+            "required": false,
+            "description": "Include additional model details.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "Get model info",
+        "description": "Returns metadata for a specific model.",
+        "operationId": "getModelInfo",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/status": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "Get model status",
+        "description": "Returns the current status of the model (e.g., whether it is loaded or archived).",
+        "operationId": "getModelStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/modules": {
+      "get": {
+        "tags": ["Modules"],
+        "summary": "List modules",
+        "description": "Returns IDs and names for all modules in a model.",
+        "operationId": "listModules",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of modules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/modules/{moduleId}": {
+      "get": {
+        "tags": ["Modules"],
+        "summary": "Get module metadata",
+        "description": "Returns metadata for a specific module.",
+        "operationId": "getModule",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the module.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Module metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/views": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "List views in a model",
+        "description": "Returns IDs and names for all views in a model.",
+        "operationId": "listModelViews",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of views",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/modules/{moduleId}/views": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "List views in a module",
+        "description": "Returns IDs and names for all views in a specific module.",
+        "operationId": "listModuleViews",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the module.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of views",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/views/{viewId}": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get view metadata",
+        "description": "Returns metadata for a specific view including dimension information.",
+        "operationId": "getView",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the view.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "View metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/views/{viewId}/data": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Read view cell data",
+        "description": "Returns cell data for the specified view. Supports up to 1 million cells per request. Use pages parameter for pagination of large data sets.",
+        "operationId": "getViewData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the view.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pages",
+            "in": "query",
+            "required": false,
+            "description": "Page specification for large data reads.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "Response format (v1 or v2).",
+            "schema": {
+              "type": "string",
+              "enum": ["v1", "v2"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "View cell data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewDataResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/views/{viewId}/dimensions": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get view dimensions",
+        "description": "Returns metadata about the dimensions on a view (rows, columns, pages).",
+        "operationId": "getViewDimensions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the view.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "View dimension metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewDimensionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/lineItems": {
+      "get": {
+        "tags": ["Line Items"],
+        "summary": "List all line items in a model",
+        "description": "Returns all line items across all modules in the model.",
+        "operationId": "listModelLineItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of line items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineItemListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/modules/{moduleId}/lineItems": {
+      "get": {
+        "tags": ["Line Items"],
+        "summary": "List line items in a module",
+        "description": "Returns all line items in the specified module.",
+        "operationId": "listModuleLineItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the module.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of line items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineItemListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/lineItems/{lineItemId}/dimensions": {
+      "get": {
+        "tags": ["Line Items"],
+        "summary": "Get line item dimensions",
+        "description": "Returns the dimension IDs for a specific line item.",
+        "operationId": "getLineItemDimensions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "lineItemId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the line item.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Line item dimension IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DimensionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/dimensions/{dimensionId}/items": {
+      "get": {
+        "tags": ["Dimensions"],
+        "summary": "List dimension items",
+        "description": "Returns all items in the specified dimension.",
+        "operationId": "listDimensionItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "dimensionId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the dimension.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of dimension items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DimensionItemListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/versions": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "List model versions",
+        "description": "Returns version metadata for the model.",
+        "operationId": "listModelVersions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/{modelId}/modelCalendar": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "Get model calendar",
+        "description": "Returns fiscal year and current period information for the model.",
+        "operationId": "getModelCalendar",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model calendar information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCalendarResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/lists": {
+      "get": {
+        "tags": ["Lists"],
+        "summary": "List all lists in a model",
+        "description": "Returns all lists defined in the specified model.",
+        "operationId": "listLists",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of lists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/lists/{listId}": {
+      "get": {
+        "tags": ["Lists"],
+        "summary": "Get list metadata",
+        "description": "Returns metadata and properties for a specific list.",
+        "operationId": "getList",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/listId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/lists/{listId}/items": {
+      "get": {
+        "tags": ["Lists"],
+        "summary": "Get list items",
+        "description": "Returns all items in the specified list.",
+        "operationId": "getListItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/listId"
+          },
+          {
+            "name": "includeAll",
+            "in": "query",
+            "required": false,
+            "description": "Include all properties for each item.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListItemsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Lists"],
+        "summary": "Add list items",
+        "description": "Adds new items to the specified list (transactional API).",
+        "operationId": "addListItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/listId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListItemWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Items added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListItemWriteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Lists"],
+        "summary": "Update list items",
+        "description": "Updates existing items in the specified list (transactional API).",
+        "operationId": "updateListItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/listId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListItemWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Items updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListItemWriteResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Lists"],
+        "summary": "Delete list items",
+        "description": "Deletes items from the specified list by name or ID (transactional API).",
+        "operationId": "deleteListItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/listId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListItemDeleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Items deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListItemWriteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/lists/{listId}/items/upsert": {
+      "post": {
+        "tags": ["Lists"],
+        "summary": "Upsert list items",
+        "description": "Adds new items or updates existing items in the specified list in a single operation (transactional API).",
+        "operationId": "upsertListItems",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/listId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListItemWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Items upserted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListItemWriteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/files": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "List files",
+        "description": "Returns a list of files available in the model for import/export operations.",
+        "operationId": "listFiles",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of files",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/files/{fileId}": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "Get file metadata",
+        "description": "Returns metadata for a specific file.",
+        "operationId": "getFile",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Files"],
+        "summary": "Upload file (single chunk)",
+        "description": "Uploads a complete file as a single chunk. Use chunked upload for files larger than 50MB.",
+        "operationId": "uploadFile",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Files"],
+        "summary": "Delete a file",
+        "description": "Deletes the specified file from the model.",
+        "operationId": "deleteFile",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "File deleted successfully"
+          },
+          "404": {
+            "description": "File not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/files/{fileId}/chunks": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "List file chunks",
+        "description": "Returns a list of chunks for the specified file. Used when downloading files that were uploaded in multiple chunks.",
+        "operationId": "listFileChunks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of file chunks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileChunkListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Files"],
+        "summary": "Set file chunk count",
+        "description": "Sets the number of chunks for a multi-chunk file upload. Must be called before uploading individual chunks.",
+        "operationId": "setFileChunkCount",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChunkCountRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chunk count set successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/files/{fileId}/chunks/{chunkId}": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "Download a file chunk",
+        "description": "Downloads a specific chunk of a file.",
+        "operationId": "downloadFileChunk",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          },
+          {
+            "name": "chunkId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the chunk.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chunk data",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Files"],
+        "summary": "Upload a file chunk",
+        "description": "Uploads a specific chunk of a multi-chunk file.",
+        "operationId": "uploadFileChunk",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/fileId"
+          },
+          {
+            "name": "chunkId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the chunk.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chunk uploaded successfully"
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/imports": {
+      "get": {
+        "tags": ["Imports"],
+        "summary": "List import actions",
+        "description": "Returns a list of all import action definitions in the model.",
+        "operationId": "listImports",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of import actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/imports/{importId}": {
+      "get": {
+        "tags": ["Imports"],
+        "summary": "Get import action metadata",
+        "description": "Returns metadata for a specific import action.",
+        "operationId": "getImport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import action metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/imports/{importId}/tasks": {
+      "get": {
+        "tags": ["Imports"],
+        "summary": "List import tasks",
+        "description": "Returns a list of tasks (runs) for the specified import action.",
+        "operationId": "listImportTasks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of import tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Imports"],
+        "summary": "Run an import action",
+        "description": "Starts a new task for the specified import action.",
+        "operationId": "runImport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import task started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/imports/{importId}/tasks/{taskId}": {
+      "get": {
+        "tags": ["Imports"],
+        "summary": "Get import task status",
+        "description": "Returns the status of a specific import task.",
+        "operationId": "getImportTaskStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import task status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/imports/{importId}/tasks/{taskId}/dump": {
+      "get": {
+        "tags": ["Imports"],
+        "summary": "Get import task failure dump",
+        "description": "Returns a dump of failures for the specified import task. Only available if the task encountered errors.",
+        "operationId": "getImportTaskDump",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Failure dump data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDumpResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No dump available (task completed without errors)"
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/imports/{importId}/tasks/{taskId}/dumps/{dumpFileId}/chunks": {
+      "get": {
+        "tags": ["Imports"],
+        "summary": "Get import dump file chunks",
+        "description": "Returns chunks of a dump file from a failed import task.",
+        "operationId": "getImportDumpChunks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          },
+          {
+            "name": "dumpFileId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the dump file.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dump file chunk data",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/exports": {
+      "get": {
+        "tags": ["Exports"],
+        "summary": "List export actions",
+        "description": "Returns a list of all export action definitions in the model.",
+        "operationId": "listExports",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of export actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/exports/{exportId}": {
+      "get": {
+        "tags": ["Exports"],
+        "summary": "Get export action metadata",
+        "description": "Returns metadata for a specific export action.",
+        "operationId": "getExport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/exportId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export action metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/exports/{exportId}/tasks": {
+      "get": {
+        "tags": ["Exports"],
+        "summary": "List export tasks",
+        "description": "Returns a list of tasks (runs) for the specified export action.",
+        "operationId": "listExportTasks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/exportId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of export tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Exports"],
+        "summary": "Run an export action",
+        "description": "Starts a new task for the specified export action.",
+        "operationId": "runExport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/exportId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Export task started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/exports/{exportId}/tasks/{taskId}": {
+      "get": {
+        "tags": ["Exports"],
+        "summary": "Get export task status",
+        "description": "Returns the status of a specific export task.",
+        "operationId": "getExportTaskStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/exportId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export task status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/exports/{exportId}/tasks/{taskId}/dump": {
+      "get": {
+        "tags": ["Exports"],
+        "summary": "Get export task failure dump",
+        "description": "Returns a dump of failures for the specified export task.",
+        "operationId": "getExportTaskDump",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/exportId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Failure dump data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDumpResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No dump available"
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/actions": {
+      "get": {
+        "tags": ["Actions"],
+        "summary": "List actions",
+        "description": "Returns a list of all available actions in the model (imports, exports, processes, and delete actions).",
+        "operationId": "listActions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/actions/{actionId}": {
+      "get": {
+        "tags": ["Actions"],
+        "summary": "Get action metadata",
+        "description": "Returns metadata for a specific action.",
+        "operationId": "getAction",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the action.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/processes": {
+      "get": {
+        "tags": ["Processes"],
+        "summary": "List process definitions",
+        "description": "Returns a list of all process definitions in the model.",
+        "operationId": "listProcesses",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of processes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/processes/{processId}": {
+      "get": {
+        "tags": ["Processes"],
+        "summary": "Get process definition",
+        "description": "Returns metadata for a specific process.",
+        "operationId": "getProcess",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/processId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Process metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/processes/{processId}/tasks": {
+      "get": {
+        "tags": ["Processes"],
+        "summary": "List process tasks",
+        "description": "Returns a list of tasks (runs) for the specified process.",
+        "operationId": "listProcessTasks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/processId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of process tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Processes"],
+        "summary": "Run a process",
+        "description": "Starts a new task for the specified process.",
+        "operationId": "runProcess",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/processId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Process task started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/processes/{processId}/tasks/{taskId}": {
+      "get": {
+        "tags": ["Processes"],
+        "summary": "Get process task status",
+        "description": "Returns the status of a specific process task.",
+        "operationId": "getProcessTaskStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/processId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Process task status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/processes/{processId}/tasks/{taskId}/dump": {
+      "get": {
+        "tags": ["Processes"],
+        "summary": "Get process task failure dump",
+        "description": "Returns a dump of failures for the specified process task.",
+        "operationId": "getProcessTaskDump",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "$ref": "#/components/parameters/processId"
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Failure dump data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDumpResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No dump available"
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/deletions": {
+      "get": {
+        "tags": ["Delete Actions"],
+        "summary": "List delete actions",
+        "description": "Returns a list of all delete action definitions in the model.",
+        "operationId": "listDeletions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of delete actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/deletions/{deletionId}": {
+      "get": {
+        "tags": ["Delete Actions"],
+        "summary": "Get delete action metadata",
+        "description": "Returns metadata for a specific delete action.",
+        "operationId": "getDeletion",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "deletionId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the delete action.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete action metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/deletions/{deletionId}/tasks": {
+      "get": {
+        "tags": ["Delete Actions"],
+        "summary": "List delete action tasks",
+        "description": "Returns a list of tasks (runs) for the specified delete action.",
+        "operationId": "listDeletionTasks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "deletionId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the delete action.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of delete tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Delete Actions"],
+        "summary": "Run a delete action",
+        "description": "Starts a new task for the specified delete action.",
+        "operationId": "runDeletion",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "deletionId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the delete action.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delete task started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/models/{modelId}/deletions/{deletionId}/tasks/{taskId}": {
+      "get": {
+        "tags": ["Delete Actions"],
+        "summary": "Get delete task status",
+        "description": "Returns the status of a specific delete task.",
+        "operationId": "getDeletionTaskStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/modelId"
+          },
+          {
+            "name": "deletionId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the delete action.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/taskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete task status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "anaplan_oauth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authentication for Anaplan. Supports Authorization Code and Device Authorization Code grant flows. Scopes: openid, profile, email, offline_access.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://us1a.app.anaplan.com/oauth/authorize",
+            "tokenUrl": "https://us1a.app.anaplan.com/oauth/token",
+            "refreshUrl": "https://us1a.app.anaplan.com/oauth/token",
+            "scopes": {
+              "openid": "Standard OpenID Connect scope (required)",
+              "profile": "Access to user profile information",
+              "email": "Access to user email address",
+              "offline_access": "Request a refresh token for offline access"
+            }
+          }
+        }
+      },
+      "basic_auth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "HTTP Basic Authentication using Anaplan username (email) and password. Used to obtain an Anaplan auth token from the /token/authenticate endpoint."
+      },
+      "anaplan_auth_token": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Anaplan authentication token obtained from /token/authenticate or via OAuth 2.0. Format: 'AnaplanAuthToken {token}'. Tokens are valid for 35 minutes and must be refreshed via /token/refresh."
+      },
+      "ca_certificate": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "CACertificate",
+        "description": "CA Certificate authentication. Send a PEM-encoded CA certificate, encoded data, and encoded signed data to the /token/authenticate endpoint to obtain an Anaplan auth token."
+      }
+    },
+    "parameters": {
+      "workspaceId": {
+        "name": "workspaceId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the workspace.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "modelId": {
+        "name": "modelId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the model.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "fileId": {
+        "name": "fileId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the file.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "importId": {
+        "name": "importId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the import action.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "exportId": {
+        "name": "exportId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the export action.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "processId": {
+        "name": "processId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the process.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "taskId": {
+        "name": "taskId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the task.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "listId": {
+        "name": "listId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the list.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "CertificateAuthRequest": {
+        "type": "object",
+        "properties": {
+          "encodedData": {
+            "type": "string",
+            "description": "A randomly generated base64-encoded data string (at least 100 bytes)."
+          },
+          "encodedSignedData": {
+            "type": "string",
+            "description": "The encoded data signed by your private key and base64-encoded."
+          }
+        },
+        "required": ["encodedData", "encodedSignedData"]
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "statusMessage": {
+            "type": "string",
+            "description": "Human-readable status message."
+          },
+          "tokenInfo": {
+            "type": "object",
+            "properties": {
+              "tokenId": {
+                "type": "string",
+                "description": "The authentication token to use in subsequent API requests."
+              },
+              "tokenValue": {
+                "type": "string",
+                "description": "The token value."
+              },
+              "expiresAt": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Token expiration time in epoch milliseconds."
+              },
+              "refreshExpiresAt": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Refresh token expiration time in epoch milliseconds."
+              }
+            }
+          }
+        }
+      },
+      "TokenValidationResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "statusMessage": {
+            "type": "string"
+          },
+          "tokenInfo": {
+            "type": "object",
+            "properties": {
+              "tokenId": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          }
+        }
+      },
+      "OAuthTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "The access token issued by the authorization server."
+          },
+          "token_type": {
+            "type": "string",
+            "description": "The type of the token (typically 'Bearer').",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "The lifetime of the access token in seconds."
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "The refresh token, if offline_access scope was requested."
+          },
+          "scope": {
+            "type": "string",
+            "description": "The scopes granted."
+          },
+          "id_token": {
+            "type": "string",
+            "description": "The OpenID Connect ID token (if openid scope was requested)."
+          }
+        },
+        "required": ["access_token", "token_type", "expires_in"]
+      },
+      "OAuthErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code.",
+            "enum": ["invalid_request", "invalid_client", "invalid_grant", "unauthorized_client", "unsupported_grant_type", "invalid_scope", "authorization_pending", "slow_down", "expired_token", "access_denied"]
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable description of the error."
+          }
+        },
+        "required": ["error"]
+      },
+      "DeviceAuthorizationResponse": {
+        "type": "object",
+        "properties": {
+          "device_code": {
+            "type": "string",
+            "description": "The device verification code."
+          },
+          "user_code": {
+            "type": "string",
+            "description": "The user verification code to display to the user."
+          },
+          "verification_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL where the user should go to authorize the device."
+          },
+          "verification_uri_complete": {
+            "type": "string",
+            "format": "uri",
+            "description": "The complete verification URL including the user code."
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "The lifetime of the device code in seconds."
+          },
+          "interval": {
+            "type": "integer",
+            "description": "The minimum number of seconds the client should wait between polling requests."
+          }
+        },
+        "required": ["device_code", "user_code", "verification_uri", "expires_in"]
+      },
+      "Status": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Numeric status code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "statusMessage": {
+            "type": "string",
+            "description": "Human-readable error message."
+          }
+        }
+      },
+      "Workspace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the workspace."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the workspace."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the workspace is active."
+          },
+          "sizeAllowance": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Maximum allowed size in bytes."
+          },
+          "currentSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Current size in bytes."
+          }
+        }
+      },
+      "WorkspaceListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Workspace"
+            }
+          }
+        }
+      },
+      "WorkspaceResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/Workspace"
+          }
+        }
+      },
+      "Model": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the model."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the model."
+          },
+          "activeState": {
+            "type": "string",
+            "description": "The active state of the model.",
+            "enum": ["ACTIVE", "ARCHIVED"]
+          },
+          "lastSavedSerialNumber": {
+            "type": "integer",
+            "description": "The serial number of the last save."
+          },
+          "lastModifiedByUserGuid": {
+            "type": "string",
+            "description": "The GUID of the user who last modified the model."
+          },
+          "memoryUsage": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Memory usage in bytes."
+          },
+          "currentWorkspaceId": {
+            "type": "string",
+            "description": "The workspace the model belongs to."
+          },
+          "currentWorkspaceName": {
+            "type": "string",
+            "description": "The name of the workspace."
+          },
+          "modelUrl": {
+            "type": "string",
+            "description": "URL to access the model in the Anaplan web application."
+          },
+          "categoryValues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ModelListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Model"
+            }
+          }
+        }
+      },
+      "ModelResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Model"
+          }
+        }
+      },
+      "ModelStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "modelStatus": {
+            "type": "object",
+            "properties": {
+              "loadStatus": {
+                "type": "string",
+                "description": "Whether the model is loaded.",
+                "enum": ["NOT_LOADED", "LOADING", "LOADED"]
+              },
+              "memoryUsage": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          }
+        }
+      },
+      "ModelCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "modelCalendar": {
+            "type": "object",
+            "properties": {
+              "fiscalYear": {
+                "type": "string",
+                "description": "The fiscal year setting."
+              },
+              "currentPeriod": {
+                "type": "string",
+                "description": "The current period."
+              },
+              "calendarType": {
+                "type": "string",
+                "description": "The type of calendar (e.g., Calendar Months/Quarters/Years)."
+              }
+            }
+          }
+        }
+      },
+      "Module": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the module."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the module."
+          }
+        }
+      },
+      "ModuleListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Module"
+            }
+          }
+        }
+      },
+      "ModuleResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "module": {
+            "$ref": "#/components/schemas/Module"
+          }
+        }
+      },
+      "View": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the view."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the view."
+          },
+          "moduleId": {
+            "type": "string",
+            "description": "The ID of the module the view belongs to."
+          },
+          "moduleName": {
+            "type": "string",
+            "description": "The name of the module the view belongs to."
+          }
+        }
+      },
+      "ViewListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/View"
+            }
+          }
+        }
+      },
+      "ViewResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "view": {
+            "$ref": "#/components/schemas/View"
+          }
+        }
+      },
+      "ViewDataResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "pages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "value": {},
+                      "dataType": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ViewDimensionsResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["ROWS", "COLUMNS", "PAGES"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "LineItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the line item."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the line item."
+          },
+          "moduleId": {
+            "type": "string",
+            "description": "The ID of the module the line item belongs to."
+          },
+          "moduleName": {
+            "type": "string",
+            "description": "The name of the module."
+          },
+          "format": {
+            "type": "string",
+            "description": "The data format of the line item."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The summary method."
+          },
+          "formulaScope": {
+            "type": "string",
+            "description": "The formula scope of the line item."
+          },
+          "isSummary": {
+            "type": "boolean"
+          },
+          "startOfSection": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LineItemListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "lineItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineItem"
+            }
+          }
+        }
+      },
+      "DimensionListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "DimensionItemListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "VersionListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "isSwitchoverActive": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ListDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the list."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the list."
+          }
+        }
+      },
+      "ListsResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "lists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListDefinition"
+            }
+          }
+        }
+      },
+      "ListDetailResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "list": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "hasSelectiveAccess": {
+                "type": "boolean"
+              },
+              "productionData": {
+                "type": "boolean"
+              },
+              "managedBy": {
+                "type": "string"
+              },
+              "numberedList": {
+                "type": "boolean"
+              },
+              "useTopLevelAsPageDefault": {
+                "type": "boolean"
+              },
+              "properties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "formulaScope": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ListItemsResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "listItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "properties": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "subsets": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  }
+                },
+                "parent": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ListItemWriteRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the list item."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The code of the list item."
+                },
+                "parent": {
+                  "type": "string",
+                  "description": "The name or ID of the parent item (for hierarchical lists)."
+                },
+                "properties": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "description": "Key-value pairs of property names and values."
+                },
+                "subsets": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "description": "Key-value pairs of subset names and membership."
+                }
+              },
+              "required": ["name"]
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "ListItemDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The ID of the item to delete."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name of the item to delete."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The code of the item to delete."
+                }
+              }
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "ListItemWriteResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "added": {
+            "type": "integer",
+            "description": "Number of items added."
+          },
+          "ignored": {
+            "type": "integer",
+            "description": "Number of items ignored."
+          },
+          "updated": {
+            "type": "integer",
+            "description": "Number of items updated."
+          },
+          "deleted": {
+            "type": "integer",
+            "description": "Number of items deleted."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of items processed."
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "requestIndex": {
+                  "type": "integer",
+                  "description": "Index of the failed item in the request."
+                },
+                "failureType": {
+                  "type": "string",
+                  "description": "Type of failure."
+                },
+                "failureMessageDetails": {
+                  "type": "string",
+                  "description": "Detailed failure message."
+                }
+              }
+            }
+          }
+        }
+      },
+      "FileMetadata": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the file."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the file."
+          },
+          "chunkCount": {
+            "type": "integer",
+            "description": "The number of chunks the file is split into."
+          },
+          "delimiter": {
+            "type": "string",
+            "description": "The delimiter character used in the file."
+          },
+          "encoding": {
+            "type": "string",
+            "description": "The character encoding of the file."
+          },
+          "firstDataRow": {
+            "type": "integer",
+            "description": "The row number where data starts."
+          },
+          "format": {
+            "type": "string",
+            "description": "The file format."
+          },
+          "headerRow": {
+            "type": "integer",
+            "description": "The row number of the header."
+          },
+          "separator": {
+            "type": "string",
+            "description": "The separator character."
+          }
+        }
+      },
+      "FileListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileMetadata"
+            }
+          }
+        }
+      },
+      "FileResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileMetadata"
+          }
+        }
+      },
+      "FileChunkListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "chunks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ChunkCountRequest": {
+        "type": "object",
+        "properties": {
+          "chunkCount": {
+            "type": "integer",
+            "description": "The total number of chunks to upload."
+          }
+        },
+        "required": ["chunkCount"]
+      },
+      "ImportDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the import action."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the import action."
+          },
+          "importType": {
+            "type": "string",
+            "description": "The type of the import."
+          },
+          "importDataSourceId": {
+            "type": "string",
+            "description": "The data source ID for the import."
+          }
+        }
+      },
+      "ImportListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "imports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportDefinition"
+            }
+          }
+        }
+      },
+      "ImportResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "import": {
+            "$ref": "#/components/schemas/ImportDefinition"
+          }
+        }
+      },
+      "ExportDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the export action."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the export action."
+          },
+          "exportType": {
+            "type": "string",
+            "description": "The type of the export."
+          },
+          "exportFormat": {
+            "type": "string",
+            "description": "The format of the exported file."
+          }
+        }
+      },
+      "ExportListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "exports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExportDefinition"
+            }
+          }
+        }
+      },
+      "ExportResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "export": {
+            "$ref": "#/components/schemas/ExportDefinition"
+          }
+        }
+      },
+      "ActionDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the action."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the action."
+          },
+          "actionType": {
+            "type": "string",
+            "description": "The type of the action (IMPORT, EXPORT, PROCESS, DELETE)."
+          }
+        }
+      },
+      "ActionListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionDefinition"
+            }
+          }
+        }
+      },
+      "ActionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ActionDefinition"
+          }
+        }
+      },
+      "ProcessDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the process."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the process."
+          }
+        }
+      },
+      "ProcessListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "processes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessDefinition"
+            }
+          }
+        }
+      },
+      "ProcessResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "process": {
+            "$ref": "#/components/schemas/ProcessDefinition"
+          }
+        }
+      },
+      "DeletionDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the delete action."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the delete action."
+          }
+        }
+      },
+      "DeletionListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "deletions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeletionDefinition"
+            }
+          }
+        }
+      },
+      "DeletionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "deletion": {
+            "$ref": "#/components/schemas/DeletionDefinition"
+          }
+        }
+      },
+      "TaskRunRequest": {
+        "type": "object",
+        "properties": {
+          "localeName": {
+            "type": "string",
+            "description": "The locale for the task execution (e.g., 'en_US').",
+            "example": "en_US"
+          }
+        },
+        "required": ["localeName"]
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "The unique identifier of the task."
+          },
+          "taskState": {
+            "type": "string",
+            "description": "The current state of the task.",
+            "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETE", "CANCELLING", "CANCELLED"]
+          },
+          "creationTime": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Task creation time in epoch milliseconds."
+          }
+        }
+      },
+      "TaskResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "task": {
+            "$ref": "#/components/schemas/Task"
+          }
+        }
+      },
+      "TaskListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          }
+        }
+      },
+      "TaskStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "task": {
+            "type": "object",
+            "properties": {
+              "taskId": {
+                "type": "string"
+              },
+              "taskState": {
+                "type": "string",
+                "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETE", "CANCELLING", "CANCELLED"]
+              },
+              "creationTime": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "currentStep": {
+                "type": "string",
+                "description": "The current step in the task execution."
+              },
+              "progress": {
+                "type": "number",
+                "format": "float",
+                "description": "Task progress as a percentage (0.0 to 1.0)."
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "successful": {
+                    "type": "boolean"
+                  },
+                  "details": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "localMessageText": {
+                          "type": "string"
+                        },
+                        "occurrences": {
+                          "type": "integer"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "failureDumpAvailable": {
+                    "type": "boolean",
+                    "description": "Whether a failure dump file is available."
+                  },
+                  "nestedResults": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "objectId": {
+                          "type": "string"
+                        },
+                        "objectName": {
+                          "type": "string"
+                        },
+                        "successful": {
+                          "type": "boolean"
+                        },
+                        "failureDumpAvailable": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TaskDumpResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "dumpFileId": {
+            "type": "string",
+            "description": "The ID of the dump file."
+          },
+          "dumpFileChunkCount": {
+            "type": "integer",
+            "description": "The number of chunks in the dump file."
+          }
+        }
+      }
+    }
+  }
+}

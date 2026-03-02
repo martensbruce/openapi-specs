@@ -1,0 +1,3491 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Showpad REST API",
+    "description": "The Showpad REST API provides programmatic access to the Showpad content enablement platform. It allows developers to manage users, assets, divisions, tags, channels, user groups, content profiles, experiences, shares, and webhooks.\n\nCapabilities include:\n- User management - Create, update, retrieve, and delete users and user groups\n- Content management - Upload, organize, and manage assets and content profiles\n- Division management - Organize content and users into divisions\n- Tagging - Categorize and organize content with tags\n- Channels - Distribute content through channels\n- Experiences - Manage interactive content experiences\n- Shares - Generate shareable links with tracking\n- Webhooks - Receive real-time notifications of events\n\nShowpad supports two API versions (v3 and v4) that can be used in hybrid mode. This spec covers the v3 API, which is the most complete version. Authentication is handled via OAuth 2.0 or personal API tokens passed as Bearer tokens.",
+    "version": "3.0.0",
+    "contact": {
+      "name": "Showpad Developer Support",
+      "url": "https://developer.showpad.com"
+    },
+    "license": {
+      "name": "Showpad Terms of Service",
+      "url": "https://www.showpad.com/terms"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{subdomain}.showpad.biz/api/v3",
+      "description": "Showpad API v3 (.biz domain)",
+      "variables": {
+        "subdomain": {
+          "default": "yourcompany",
+          "description": "Your Showpad organization subdomain"
+        }
+      }
+    },
+    {
+      "url": "https://{subdomain}.showpad.com/api/v3",
+      "description": "Showpad API v3 (.com domain)",
+      "variables": {
+        "subdomain": {
+          "default": "yourcompany",
+          "description": "Your Showpad organization subdomain"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "oauth2": []
+    },
+    {
+      "bearerToken": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Manage users including creation, updates, retrieval, and deletion. Supports integration with external user directories."
+    },
+    {
+      "name": "UserGroups",
+      "description": "Manage user groups for organizing users and controlling access permissions."
+    },
+    {
+      "name": "Assets",
+      "description": "Manage content assets including uploading, metadata management, and organization within the content library."
+    },
+    {
+      "name": "Divisions",
+      "description": "Manage organizational divisions to structure content and user access."
+    },
+    {
+      "name": "Tags",
+      "description": "Manage tags for categorizing and organizing content assets."
+    },
+    {
+      "name": "Channels",
+      "description": "Manage content distribution channels for organizing and delivering content to users."
+    },
+    {
+      "name": "ContentProfiles",
+      "description": "Manage content profiles that define how content is displayed and organized."
+    },
+    {
+      "name": "Experiences",
+      "description": "Manage interactive content experiences for engaging buyer interactions."
+    },
+    {
+      "name": "Shares",
+      "description": "Generate and manage shareable links with configurable access permissions and activity tracking."
+    },
+    {
+      "name": "Tickets",
+      "description": "Track asset processing operations and their status."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Manage webhook subscriptions for receiving real-time event notifications."
+    }
+  ],
+  "paths": {
+    "/users.json": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List users",
+        "description": "Retrieve a paginated list of users in the Showpad organization.",
+        "operationId": "listUsers",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a user",
+        "description": "Create a new user in the Showpad organization. Requires API v3.",
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": {
+            "description": "Conflict - User already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/users/{userId}.json": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get a user",
+        "description": "Retrieve a single user by their unique identifier.",
+        "operationId": "getUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/userId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with user details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update a user",
+        "description": "Update an existing user. Only provide the attributes that need to be updated. Requires API v3.",
+        "operationId": "updateUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/userId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete a user",
+        "description": "Delete a user from the Showpad organization.",
+        "operationId": "deleteUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/userId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/usergroups.json": {
+      "get": {
+        "tags": ["UserGroups"],
+        "summary": "List user groups",
+        "description": "Retrieve a paginated list of user groups.",
+        "operationId": "listUserGroups",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of user groups.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGroupListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["UserGroups"],
+        "summary": "Create a user group",
+        "description": "Create a new user group.",
+        "operationId": "createUserGroup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User group created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGroupResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/usergroups/{userGroupId}.json": {
+      "get": {
+        "tags": ["UserGroups"],
+        "summary": "Get a user group",
+        "description": "Retrieve a single user group by its identifier.",
+        "operationId": "getUserGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/userGroupId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with user group details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGroupResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["UserGroups"],
+        "summary": "Update a user group",
+        "description": "Update an existing user group.",
+        "operationId": "updateUserGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/userGroupId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User group updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGroupResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["UserGroups"],
+        "summary": "Delete a user group",
+        "description": "Delete a user group.",
+        "operationId": "deleteUserGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/userGroupId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "User group deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/usergroups/{userGroupId}/users.json": {
+      "get": {
+        "tags": ["UserGroups"],
+        "summary": "List users in a user group",
+        "description": "Retrieve all users belonging to a specific user group.",
+        "operationId": "listUserGroupUsers",
+        "parameters": [
+          { "$ref": "#/components/parameters/userGroupId" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of users in the group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["UserGroups"],
+        "summary": "Add users to a user group",
+        "description": "Add one or more users to a user group.",
+        "operationId": "addUsersToUserGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/userGroupId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserGroupUsersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Users added to the group successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGroupResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/assets.json": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "List assets",
+        "description": "Retrieve a paginated list of assets in the content library.",
+        "operationId": "listAssets",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of assets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Assets"],
+        "summary": "Create an asset",
+        "description": "Create a new asset in the content library. In API v3, asset creation returns a ticket ID for tracking the processing status.",
+        "operationId": "createAsset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asset creation initiated. Returns a ticket ID for polling the processing status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetCreationResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/assets/{assetId}.json": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "Get an asset",
+        "description": "Retrieve a single asset by its unique identifier.",
+        "operationId": "getAsset",
+        "parameters": [
+          { "$ref": "#/components/parameters/assetId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with asset details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Assets"],
+        "summary": "Update an asset",
+        "description": "Update the metadata of an existing asset.",
+        "operationId": "updateAsset",
+        "parameters": [
+          { "$ref": "#/components/parameters/assetId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Assets"],
+        "summary": "Delete an asset",
+        "description": "Delete an asset from the content library.",
+        "operationId": "deleteAsset",
+        "parameters": [
+          { "$ref": "#/components/parameters/assetId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Asset deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/assets/{assetId}/tags.json": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "List tags for an asset",
+        "description": "Retrieve all tags associated with a specific asset.",
+        "operationId": "listAssetTags",
+        "parameters": [
+          { "$ref": "#/components/parameters/assetId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Assets"],
+        "summary": "Add tags to an asset",
+        "description": "Associate one or more tags with an asset.",
+        "operationId": "addAssetTags",
+        "parameters": [
+          { "$ref": "#/components/parameters/assetId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetTagsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags added to the asset successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/assets/{assetId}/channels.json": {
+      "get": {
+        "tags": ["Assets"],
+        "summary": "List channels for an asset",
+        "description": "Retrieve all channels an asset is published to.",
+        "operationId": "listAssetChannels",
+        "parameters": [
+          { "$ref": "#/components/parameters/assetId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of channels.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/divisions.json": {
+      "get": {
+        "tags": ["Divisions"],
+        "summary": "List divisions",
+        "description": "Retrieve a paginated list of divisions.",
+        "operationId": "listDivisions",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of divisions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DivisionListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Divisions"],
+        "summary": "Create a division",
+        "description": "Create a new division.",
+        "operationId": "createDivision",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDivisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Division created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DivisionResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/divisions/{divisionId}.json": {
+      "get": {
+        "tags": ["Divisions"],
+        "summary": "Get a division",
+        "description": "Retrieve a single division by its identifier.",
+        "operationId": "getDivision",
+        "parameters": [
+          { "$ref": "#/components/parameters/divisionId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with division details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DivisionResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Divisions"],
+        "summary": "Update a division",
+        "description": "Update an existing division.",
+        "operationId": "updateDivision",
+        "parameters": [
+          { "$ref": "#/components/parameters/divisionId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDivisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Division updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DivisionResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Divisions"],
+        "summary": "Delete a division",
+        "description": "Delete a division.",
+        "operationId": "deleteDivision",
+        "parameters": [
+          { "$ref": "#/components/parameters/divisionId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Division deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/divisions/{divisionId}/assets.json": {
+      "get": {
+        "tags": ["Divisions"],
+        "summary": "List assets in a division",
+        "description": "Retrieve all assets belonging to a specific division.",
+        "operationId": "listDivisionAssets",
+        "parameters": [
+          { "$ref": "#/components/parameters/divisionId" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of assets in the division.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/tags.json": {
+      "get": {
+        "tags": ["Tags"],
+        "summary": "List tags",
+        "description": "Retrieve a paginated list of tags.",
+        "operationId": "listTags",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Tags"],
+        "summary": "Create a tag",
+        "description": "Create a new tag for content categorization.",
+        "operationId": "createTag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/tags/{tagId}.json": {
+      "get": {
+        "tags": ["Tags"],
+        "summary": "Get a tag",
+        "description": "Retrieve a single tag by its identifier.",
+        "operationId": "getTag",
+        "parameters": [
+          { "$ref": "#/components/parameters/tagId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with tag details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Tags"],
+        "summary": "Update a tag",
+        "description": "Update an existing tag.",
+        "operationId": "updateTag",
+        "parameters": [
+          { "$ref": "#/components/parameters/tagId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Tags"],
+        "summary": "Delete a tag",
+        "description": "Delete a tag.",
+        "operationId": "deleteTag",
+        "parameters": [
+          { "$ref": "#/components/parameters/tagId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tag deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/channels.json": {
+      "get": {
+        "tags": ["Channels"],
+        "summary": "List channels",
+        "description": "Retrieve a paginated list of channels.",
+        "operationId": "listChannels",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of channels.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Channels"],
+        "summary": "Create a channel",
+        "description": "Create a new content distribution channel.",
+        "operationId": "createChannel",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChannelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Channel created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/channels/{channelId}.json": {
+      "get": {
+        "tags": ["Channels"],
+        "summary": "Get a channel",
+        "description": "Retrieve a single channel by its identifier.",
+        "operationId": "getChannel",
+        "parameters": [
+          { "$ref": "#/components/parameters/channelId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with channel details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Channels"],
+        "summary": "Update a channel",
+        "description": "Update an existing channel.",
+        "operationId": "updateChannel",
+        "parameters": [
+          { "$ref": "#/components/parameters/channelId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChannelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Channel updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Channels"],
+        "summary": "Delete a channel",
+        "description": "Delete a channel.",
+        "operationId": "deleteChannel",
+        "parameters": [
+          { "$ref": "#/components/parameters/channelId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Channel deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/channels/{channelId}/assets.json": {
+      "get": {
+        "tags": ["Channels"],
+        "summary": "List assets in a channel",
+        "description": "Retrieve all assets published to a specific channel.",
+        "operationId": "listChannelAssets",
+        "parameters": [
+          { "$ref": "#/components/parameters/channelId" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of assets in the channel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Channels"],
+        "summary": "Add assets to a channel",
+        "description": "Publish one or more assets to a channel.",
+        "operationId": "addAssetsToChannel",
+        "parameters": [
+          { "$ref": "#/components/parameters/channelId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChannelAssetsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assets added to the channel successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contentprofiles.json": {
+      "get": {
+        "tags": ["ContentProfiles"],
+        "summary": "List content profiles",
+        "description": "Retrieve a paginated list of content profiles.",
+        "operationId": "listContentProfiles",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of content profiles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentProfileListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["ContentProfiles"],
+        "summary": "Create a content profile",
+        "description": "Create a new content profile.",
+        "operationId": "createContentProfile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContentProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Content profile created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentProfileResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contentprofiles/{contentProfileId}.json": {
+      "get": {
+        "tags": ["ContentProfiles"],
+        "summary": "Get a content profile",
+        "description": "Retrieve a single content profile by its identifier.",
+        "operationId": "getContentProfile",
+        "parameters": [
+          { "$ref": "#/components/parameters/contentProfileId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with content profile details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentProfileResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["ContentProfiles"],
+        "summary": "Update a content profile",
+        "description": "Update an existing content profile.",
+        "operationId": "updateContentProfile",
+        "parameters": [
+          { "$ref": "#/components/parameters/contentProfileId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContentProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content profile updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentProfileResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["ContentProfiles"],
+        "summary": "Delete a content profile",
+        "description": "Delete a content profile.",
+        "operationId": "deleteContentProfile",
+        "parameters": [
+          { "$ref": "#/components/parameters/contentProfileId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Content profile deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/experiences.json": {
+      "get": {
+        "tags": ["Experiences"],
+        "summary": "List experiences",
+        "description": "Retrieve a paginated list of experiences.",
+        "operationId": "listExperiences",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of experiences.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Experiences"],
+        "summary": "Create an experience",
+        "description": "Create a new interactive content experience.",
+        "operationId": "createExperience",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExperienceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Experience created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/experiences/{experienceId}.json": {
+      "get": {
+        "tags": ["Experiences"],
+        "summary": "Get an experience",
+        "description": "Retrieve a single experience by its identifier.",
+        "operationId": "getExperience",
+        "parameters": [
+          { "$ref": "#/components/parameters/experienceId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with experience details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Experiences"],
+        "summary": "Update an experience",
+        "description": "Update an existing experience.",
+        "operationId": "updateExperience",
+        "parameters": [
+          { "$ref": "#/components/parameters/experienceId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExperienceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Experience updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Experiences"],
+        "summary": "Delete an experience",
+        "description": "Delete an experience.",
+        "operationId": "deleteExperience",
+        "parameters": [
+          { "$ref": "#/components/parameters/experienceId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Experience deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/shares.json": {
+      "get": {
+        "tags": ["Shares"],
+        "summary": "List shares",
+        "description": "Retrieve a paginated list of shares.",
+        "operationId": "listShares",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of shares.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Shares"],
+        "summary": "Create a share",
+        "description": "Generate a shareable link with configurable access permissions, themes, and activity tracking.",
+        "operationId": "createShare",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShareRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Share created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/shares/{shareId}.json": {
+      "get": {
+        "tags": ["Shares"],
+        "summary": "Get a share",
+        "description": "Retrieve a single share by its identifier.",
+        "operationId": "getShare",
+        "parameters": [
+          { "$ref": "#/components/parameters/shareId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with share details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Shares"],
+        "summary": "Delete a share",
+        "description": "Delete a share and revoke its shareable link.",
+        "operationId": "deleteShare",
+        "parameters": [
+          { "$ref": "#/components/parameters/shareId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Share deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/tickets/{ticketId}.json": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get a ticket",
+        "description": "Retrieve the status of an asset processing ticket. Used to poll the processing status after creating an asset in API v3.",
+        "operationId": "getTicket",
+        "parameters": [
+          { "$ref": "#/components/parameters/ticketId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with ticket status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/webhooks.json": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List webhooks",
+        "description": "Retrieve a paginated list of webhook subscriptions.",
+        "operationId": "listWebhooks",
+        "parameters": [
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with a list of webhooks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Create a webhook",
+        "description": "Create a new webhook subscription to receive real-time notifications of events.",
+        "operationId": "createWebhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/webhooks/{webhookId}.json": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "Get a webhook",
+        "description": "Retrieve a single webhook subscription by its identifier.",
+        "operationId": "getWebhook",
+        "parameters": [
+          { "$ref": "#/components/parameters/webhookId" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with webhook details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "tags": ["Webhooks"],
+        "summary": "Update a webhook",
+        "description": "Update an existing webhook subscription.",
+        "operationId": "updateWebhook",
+        "parameters": [
+          { "$ref": "#/components/parameters/webhookId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Delete a webhook",
+        "description": "Delete a webhook subscription.",
+        "operationId": "deleteWebhook",
+        "parameters": [
+          { "$ref": "#/components/parameters/webhookId" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Webhook deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authentication for accessing Showpad data on behalf of users. Register an OAuth2 client in the Showpad Admin App to obtain a Client ID and Secret. The Authorization Code flow is recommended for integrations.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://{subdomain}.showpad.biz/api/v3/oauth2/authorize",
+            "tokenUrl": "https://{subdomain}.showpad.biz/api/v3/oauth2/token",
+            "scopes": {
+              "refresh_token": "Allows automatic refresh of access tokens",
+              "read_user_management": "Read access to user data including users, user groups, and permissions",
+              "write_user_management": "Write access to user data including users, user groups, and permissions",
+              "read_contentprofile_management": "Read access to content profiles and assets",
+              "write_contentprofile_management": "Write access to content profiles and assets",
+              "read_division_management": "Read access to divisions",
+              "write_division_management": "Write access to divisions",
+              "appsdb_online_integrations": "Access to AppsDB for online integrations"
+            }
+          }
+        }
+      },
+      "bearerToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Personal API token authentication. Generate a token from the Admin App under Settings > API Tokens. The token is passed as a Bearer token in the Authorization header. Requires Ultimate, Advanced, or Expert plan with Administrator access."
+      }
+    },
+    "parameters": {
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Limits the number of retrieved resources.",
+        "schema": {
+          "type": "integer",
+          "default": 25,
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "description": "Offsets the retrieved resources. An offset of 3 skips the first three results.",
+        "schema": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0
+        }
+      },
+      "fields": {
+        "name": "fields",
+        "in": "query",
+        "description": "A comma-separated list of attributes to return in the response. Use to retrieve only specific fields and reduce response size.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "userId": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the user.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "userGroupId": {
+        "name": "userGroupId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the user group.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "assetId": {
+        "name": "assetId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the asset.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "divisionId": {
+        "name": "divisionId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the division.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "tagId": {
+        "name": "tagId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the tag.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "channelId": {
+        "name": "channelId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the channel.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "contentProfileId": {
+        "name": "contentProfileId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the content profile.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "experienceId": {
+        "name": "experienceId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the experience.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "shareId": {
+        "name": "shareId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the share.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ticketId": {
+        "name": "ticketId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the ticket.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "webhookId": {
+        "name": "webhookId",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of the webhook.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request - The request body or parameters are invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Authentication credentials are missing or invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Insufficient permissions to access this resource.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found - The requested resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too many requests - Rate limit exceeded.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error response from the Showpad API.",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "integer",
+                "description": "HTTP status code."
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message."
+              },
+              "details": {
+                "type": "string",
+                "description": "Additional details about the error."
+              }
+            }
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "description": "Pagination metadata for list responses.",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Total number of items matching the query."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of items returned per page."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Number of items skipped."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "A Showpad user.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the user."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the user."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name of the user."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the user."
+          },
+          "userName": {
+            "type": "string",
+            "description": "Username for the user."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for linking the user to an external directory (e.g., for SAML authentication)."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the user account is active."
+          },
+          "language": {
+            "type": "string",
+            "description": "Preferred language for the user (ISO 639-1 code)."
+          },
+          "role": {
+            "type": "string",
+            "description": "The user's role within the Showpad organization.",
+            "enum": ["admin", "promotedMember", "member"]
+          },
+          "division": {
+            "type": "object",
+            "description": "The division the user belongs to.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the user was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the user was last updated."
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "description": "Request body for creating a new user.",
+        "required": ["email", "firstName", "lastName"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the user."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name of the user."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the user."
+          },
+          "userName": {
+            "type": "string",
+            "description": "Username for the user."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for linking the user to an external directory."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the user account should be active.",
+            "default": true
+          },
+          "language": {
+            "type": "string",
+            "description": "Preferred language for the user (ISO 639-1 code)."
+          },
+          "role": {
+            "type": "string",
+            "description": "The user's role.",
+            "enum": ["admin", "promotedMember", "member"]
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "description": "Request body for updating a user. Only include attributes that need to change.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the user."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name of the user."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the user."
+          },
+          "userName": {
+            "type": "string",
+            "description": "Username for the user."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for linking the user to an external directory."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the user account is active."
+          },
+          "language": {
+            "type": "string",
+            "description": "Preferred language for the user (ISO 639-1 code)."
+          },
+          "role": {
+            "type": "string",
+            "description": "The user's role.",
+            "enum": ["admin", "promotedMember", "member"]
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "description": "Response containing a single user.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of users.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "UserGroup": {
+        "type": "object",
+        "description": "A Showpad user group.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the user group."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the user group."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the user group."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the user group."
+          },
+          "userCount": {
+            "type": "integer",
+            "description": "Number of users in the group."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the group was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the group was last updated."
+          }
+        }
+      },
+      "CreateUserGroupRequest": {
+        "type": "object",
+        "description": "Request body for creating a user group.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the user group."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the user group."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the user group."
+          }
+        }
+      },
+      "UpdateUserGroupRequest": {
+        "type": "object",
+        "description": "Request body for updating a user group.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the user group."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the user group."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the user group."
+          }
+        }
+      },
+      "UserGroupResponse": {
+        "type": "object",
+        "description": "Response containing a single user group.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/UserGroup"
+          }
+        }
+      },
+      "UserGroupListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of user groups.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserGroup"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "UserGroupUsersRequest": {
+        "type": "object",
+        "description": "Request body for adding users to a user group.",
+        "required": ["userIds"],
+        "properties": {
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of user IDs to add to the group."
+          }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "description": "A Showpad content asset.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the asset."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the asset."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the asset."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the asset."
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug for the asset."
+          },
+          "fileType": {
+            "type": "string",
+            "description": "MIME type of the asset file."
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Size of the asset file in bytes."
+          },
+          "isShareable": {
+            "type": "boolean",
+            "description": "Whether the asset can be shared externally."
+          },
+          "isAnnotatable": {
+            "type": "boolean",
+            "description": "Whether annotations are enabled for the asset."
+          },
+          "isDownloadable": {
+            "type": "boolean",
+            "description": "Whether the asset can be downloaded."
+          },
+          "isSensitive": {
+            "type": "boolean",
+            "description": "Whether the asset contains sensitive content."
+          },
+          "division": {
+            "type": "object",
+            "description": "The division the asset belongs to.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "description": "Tags associated with the asset."
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Channel"
+            },
+            "description": "Channels the asset is published to."
+          },
+          "author": {
+            "type": "object",
+            "description": "Author of the asset.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "locale": {
+            "type": "string",
+            "description": "Locale of the asset content (e.g., en-US)."
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the asset thumbnail image."
+          },
+          "previewUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the asset preview."
+          },
+          "originalUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the original asset file."
+          },
+          "status": {
+            "type": "string",
+            "description": "Processing status of the asset.",
+            "enum": ["processing", "active", "failed", "deleted"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the asset was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the asset was last updated."
+          }
+        }
+      },
+      "CreateAssetRequest": {
+        "type": "object",
+        "description": "Request body for creating a new asset. Uses multipart/form-data for file upload.",
+        "required": ["name", "file"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the asset."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the asset."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the asset."
+          },
+          "divisionId": {
+            "type": "string",
+            "description": "ID of the division to assign the asset to."
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "The binary file to upload."
+          },
+          "isShareable": {
+            "type": "boolean",
+            "description": "Whether the asset can be shared externally."
+          },
+          "isAnnotatable": {
+            "type": "boolean",
+            "description": "Whether annotations are enabled."
+          },
+          "isDownloadable": {
+            "type": "boolean",
+            "description": "Whether the asset can be downloaded."
+          }
+        }
+      },
+      "UpdateAssetRequest": {
+        "type": "object",
+        "description": "Request body for updating an asset's metadata.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the asset."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the asset."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the asset."
+          },
+          "isShareable": {
+            "type": "boolean",
+            "description": "Whether the asset can be shared externally."
+          },
+          "isAnnotatable": {
+            "type": "boolean",
+            "description": "Whether annotations are enabled."
+          },
+          "isDownloadable": {
+            "type": "boolean",
+            "description": "Whether the asset can be downloaded."
+          },
+          "isSensitive": {
+            "type": "boolean",
+            "description": "Whether the asset contains sensitive content."
+          }
+        }
+      },
+      "AssetCreationResponse": {
+        "type": "object",
+        "description": "Response returned after initiating asset creation. Contains a ticket ID for tracking processing status.",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "ticketId": {
+                "type": "string",
+                "description": "Ticket ID for polling the asset processing status."
+              },
+              "assetId": {
+                "type": "string",
+                "description": "The assigned asset ID."
+              }
+            }
+          }
+        }
+      },
+      "AssetResponse": {
+        "type": "object",
+        "description": "Response containing a single asset.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Asset"
+          }
+        }
+      },
+      "AssetListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of assets.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "AssetTagsRequest": {
+        "type": "object",
+        "description": "Request body for adding tags to an asset.",
+        "required": ["tagIds"],
+        "properties": {
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of tag IDs to associate with the asset."
+          }
+        }
+      },
+      "Division": {
+        "type": "object",
+        "description": "A Showpad division.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the division."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the division."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the division."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the division."
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether this is the default division."
+          },
+          "assetCount": {
+            "type": "integer",
+            "description": "Number of assets in the division."
+          },
+          "userCount": {
+            "type": "integer",
+            "description": "Number of users in the division."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the division was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the division was last updated."
+          }
+        }
+      },
+      "CreateDivisionRequest": {
+        "type": "object",
+        "description": "Request body for creating a division.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the division."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the division."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the division."
+          }
+        }
+      },
+      "UpdateDivisionRequest": {
+        "type": "object",
+        "description": "Request body for updating a division.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the division."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the division."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the division."
+          }
+        }
+      },
+      "DivisionResponse": {
+        "type": "object",
+        "description": "Response containing a single division.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Division"
+          }
+        }
+      },
+      "DivisionListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of divisions.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Division"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "description": "A Showpad tag for content categorization.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the tag."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the tag."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the tag."
+          },
+          "category": {
+            "type": "object",
+            "description": "Tag category this tag belongs to.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "assetCount": {
+            "type": "integer",
+            "description": "Number of assets tagged with this tag."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the tag was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the tag was last updated."
+          }
+        }
+      },
+      "CreateTagRequest": {
+        "type": "object",
+        "description": "Request body for creating a tag.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the tag."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the tag."
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "ID of the tag category to assign the tag to."
+          }
+        }
+      },
+      "UpdateTagRequest": {
+        "type": "object",
+        "description": "Request body for updating a tag.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the tag."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the tag."
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "ID of the tag category."
+          }
+        }
+      },
+      "TagResponse": {
+        "type": "object",
+        "description": "Response containing a single tag.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Tag"
+          }
+        }
+      },
+      "TagListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of tags.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Channel": {
+        "type": "object",
+        "description": "A Showpad content distribution channel.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the channel."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the channel."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the channel."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the channel."
+          },
+          "assetCount": {
+            "type": "integer",
+            "description": "Number of assets published to the channel."
+          },
+          "division": {
+            "type": "object",
+            "description": "The division the channel belongs to.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "isPublished": {
+            "type": "boolean",
+            "description": "Whether the channel is currently published and visible."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the channel was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the channel was last updated."
+          }
+        }
+      },
+      "CreateChannelRequest": {
+        "type": "object",
+        "description": "Request body for creating a channel.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the channel."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the channel."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the channel."
+          },
+          "divisionId": {
+            "type": "string",
+            "description": "ID of the division to assign the channel to."
+          }
+        }
+      },
+      "UpdateChannelRequest": {
+        "type": "object",
+        "description": "Request body for updating a channel.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the channel."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the channel."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the channel."
+          }
+        }
+      },
+      "ChannelResponse": {
+        "type": "object",
+        "description": "Response containing a single channel.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Channel"
+          }
+        }
+      },
+      "ChannelListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of channels.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Channel"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "ChannelAssetsRequest": {
+        "type": "object",
+        "description": "Request body for adding assets to a channel.",
+        "required": ["assetIds"],
+        "properties": {
+          "assetIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of asset IDs to publish to the channel."
+          }
+        }
+      },
+      "ContentProfile": {
+        "type": "object",
+        "description": "A Showpad content profile defining how content is displayed and organized.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the content profile."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the content profile."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the content profile."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the content profile."
+          },
+          "division": {
+            "type": "object",
+            "description": "The division the content profile belongs to.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether this is the default content profile."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the content profile was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the content profile was last updated."
+          }
+        }
+      },
+      "CreateContentProfileRequest": {
+        "type": "object",
+        "description": "Request body for creating a content profile.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the content profile."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the content profile."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the content profile."
+          },
+          "divisionId": {
+            "type": "string",
+            "description": "ID of the division for the content profile."
+          }
+        }
+      },
+      "UpdateContentProfileRequest": {
+        "type": "object",
+        "description": "Request body for updating a content profile.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the content profile."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the content profile."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the content profile."
+          }
+        }
+      },
+      "ContentProfileResponse": {
+        "type": "object",
+        "description": "Response containing a single content profile.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ContentProfile"
+          }
+        }
+      },
+      "ContentProfileListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of content profiles.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentProfile"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Experience": {
+        "type": "object",
+        "description": "A Showpad interactive content experience.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the experience."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the experience."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the experience."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the experience."
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug for the experience."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the experience.",
+            "enum": ["draft", "published", "archived"]
+          },
+          "division": {
+            "type": "object",
+            "description": "The division the experience belongs to.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the experience thumbnail."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the experience was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the experience was last updated."
+          }
+        }
+      },
+      "CreateExperienceRequest": {
+        "type": "object",
+        "description": "Request body for creating an experience.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the experience."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the experience."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the experience."
+          },
+          "divisionId": {
+            "type": "string",
+            "description": "ID of the division for the experience."
+          }
+        }
+      },
+      "UpdateExperienceRequest": {
+        "type": "object",
+        "description": "Request body for updating an experience.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the experience."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the experience."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "External identifier for the experience."
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the experience.",
+            "enum": ["draft", "published", "archived"]
+          }
+        }
+      },
+      "ExperienceResponse": {
+        "type": "object",
+        "description": "Response containing a single experience.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Experience"
+          }
+        }
+      },
+      "ExperienceListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of experiences.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Experience"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Share": {
+        "type": "object",
+        "description": "A Showpad share with a tracked or untracked shareable link.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the share."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The shareable URL."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the share."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Subject line for the share."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message body for the share."
+          },
+          "isTracked": {
+            "type": "boolean",
+            "description": "Whether activity on the share is tracked."
+          },
+          "isPasswordProtected": {
+            "type": "boolean",
+            "description": "Whether the share is password protected."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiration date for the shareable link."
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Assets included in the share."
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Recipients of the share."
+          },
+          "viewCount": {
+            "type": "integer",
+            "description": "Number of times the share has been viewed."
+          },
+          "createdBy": {
+            "type": "object",
+            "description": "User who created the share.",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the share was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the share was last updated."
+          }
+        }
+      },
+      "CreateShareRequest": {
+        "type": "object",
+        "description": "Request body for creating a share.",
+        "required": ["assetIds"],
+        "properties": {
+          "assetIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of asset IDs to include in the share."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the share."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Subject line for the share."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message body for the share."
+          },
+          "isTracked": {
+            "type": "boolean",
+            "description": "Whether to track activity on the share.",
+            "default": true
+          },
+          "password": {
+            "type": "string",
+            "description": "Password to protect the share."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiration date for the shareable link."
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": ["email"]
+            },
+            "description": "Recipients to send the share to."
+          }
+        }
+      },
+      "ShareResponse": {
+        "type": "object",
+        "description": "Response containing a single share.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Share"
+          }
+        }
+      },
+      "ShareListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of shares.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Share"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Ticket": {
+        "type": "object",
+        "description": "A processing ticket for tracking asset upload status.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the ticket."
+          },
+          "status": {
+            "type": "string",
+            "description": "Current processing status.",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "assetId": {
+            "type": "string",
+            "description": "ID of the asset being processed."
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message or error details."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the ticket was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the ticket was last updated."
+          }
+        }
+      },
+      "TicketResponse": {
+        "type": "object",
+        "description": "Response containing a single ticket.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Ticket"
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "description": "A webhook subscription for receiving event notifications.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the webhook."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to send webhook payloads to."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of event types this webhook subscribes to (e.g., asset.created, user.updated)."
+          },
+          "secret": {
+            "type": "string",
+            "description": "Secret used to sign webhook payloads for verification."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the webhook is currently active."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the webhook."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the webhook was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the webhook was last updated."
+          }
+        }
+      },
+      "CreateWebhookRequest": {
+        "type": "object",
+        "description": "Request body for creating a webhook subscription.",
+        "required": ["url", "events"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to send webhook payloads to."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of event types to subscribe to (e.g., asset.created, asset.updated, asset.deleted, user.created, user.updated, user.deleted, share.created)."
+          },
+          "secret": {
+            "type": "string",
+            "description": "Secret for signing webhook payloads."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the webhook should be active.",
+            "default": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the webhook."
+          }
+        }
+      },
+      "UpdateWebhookRequest": {
+        "type": "object",
+        "description": "Request body for updating a webhook subscription.",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to send webhook payloads to."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of event types to subscribe to."
+          },
+          "secret": {
+            "type": "string",
+            "description": "Secret for signing webhook payloads."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the webhook is active."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the webhook."
+          }
+        }
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "description": "Response containing a single webhook.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Webhook"
+          }
+        }
+      },
+      "WebhookListResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of webhooks.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Webhook"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      }
+    }
+  }
+}

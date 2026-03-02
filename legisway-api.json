@@ -1,0 +1,3882 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Legisway API",
+    "description": "The Legisway REST API provides programmatic access to the Legisway legal management platform by Wolters Kluwer. Legisway centralizes all legal department operations including contract lifecycle management, corporate entity administration, claims and litigation tracking, vendor management, intellectual property portfolios, real estate assets, and privacy and risk compliance.\n\nKey capabilities include:\n- Contract lifecycle management (creation, negotiation, approval, execution, renewal, termination)\n- Corporate entity and subsidiary management with shareholding and mandates\n- Claims and litigation case tracking\n- Vendor assessment and management\n- Intellectual property portfolio management (trademarks, patents, domains)\n- Real estate asset management\n- Privacy and risk register (GDPR data processing, risk incidents)\n- Document management with version control\n- User and access control management\n- Webhook subscriptions for real-time event notifications\n\nAuthentication is supported via OAuth 2.0 (authorization code flow) and API key. All API responses use JSON format. Paginated list endpoints return a maximum of 100 records per page by default.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Wolters Kluwer - Legisway",
+      "url": "https://www.wolterskluwer.com/en/solutions/legisway"
+    },
+    "license": {
+      "name": "Wolters Kluwer Terms of Use",
+      "url": "https://www.wolterskluwer.com/en/solutions/legisway/terms"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.legisway.com/v1",
+      "description": "Production"
+    },
+    {
+      "url": "https://api.sandbox.legisway.com/v1",
+      "description": "Sandbox / Testing"
+    }
+  ],
+  "security": [
+    {
+      "oauth2": []
+    },
+    {
+      "apiKey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Contracts",
+      "description": "Contract lifecycle management: create, retrieve, update, and manage contracts through their full lifecycle including negotiation, approval, execution, renewal, and termination."
+    },
+    {
+      "name": "Entities",
+      "description": "Corporate entity management: subsidiaries, holdings, mandates, shareholding structures, and organizational hierarchies."
+    },
+    {
+      "name": "Claims",
+      "description": "Claims and litigation tracking: manage legal disputes, claims, court cases, and related proceedings."
+    },
+    {
+      "name": "Vendors",
+      "description": "Vendor management: vendor profiles, assessments, risk categorization, and SOC report archiving."
+    },
+    {
+      "name": "Intellectual Property",
+      "description": "Intellectual property portfolio management: trademarks, patents, domain names, copyrights, and design rights."
+    },
+    {
+      "name": "Real Estate",
+      "description": "Real estate asset management: property records, leases, and site information."
+    },
+    {
+      "name": "Privacy",
+      "description": "Privacy and risk compliance: data processing registers, risk assessments, and incident reporting (GDPR)."
+    },
+    {
+      "name": "Documents",
+      "description": "Document management: upload, download, and manage documents attached to any legal object."
+    },
+    {
+      "name": "Users",
+      "description": "User and access management: user profiles, roles, and permissions."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Webhook subscriptions for real-time notifications on resource changes."
+    }
+  ],
+  "paths": {
+    "/contracts": {
+      "get": {
+        "operationId": "listContracts",
+        "summary": "List contracts",
+        "description": "Returns a paginated list of contracts. Supports filtering by status, type, counterparty, and date ranges.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by contract status.",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "in_negotiation", "pending_approval", "approved", "active", "expired", "terminated", "renewed"]
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by contract type.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "counterparty_id",
+            "in": "query",
+            "description": "Filter by counterparty (vendor or entity) ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "start_date_from",
+            "in": "query",
+            "description": "Filter contracts with start date on or after this date (ISO 8601).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "start_date_to",
+            "in": "query",
+            "description": "Filter contracts with start date on or before this date (ISO 8601).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "expiry_date_from",
+            "in": "query",
+            "description": "Filter contracts with expiry date on or after this date (ISO 8601).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "expiry_date_to",
+            "in": "query",
+            "description": "Filter contracts with expiry date on or before this date (ISO 8601).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across contract title, reference, and description.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of contracts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createContract",
+        "summary": "Create a contract",
+        "description": "Creates a new contract record. The contract is created in draft status by default.",
+        "tags": ["Contracts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contract created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contracts/{contractId}": {
+      "get": {
+        "operationId": "getContract",
+        "summary": "Get a contract",
+        "description": "Returns the full details of a single contract by its ID.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateContract",
+        "summary": "Update a contract",
+        "description": "Updates an existing contract. Only provided fields are updated; omitted fields remain unchanged.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contract updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteContract",
+        "summary": "Delete a contract",
+        "description": "Deletes a contract. Only contracts in draft status can be deleted. Active contracts must be terminated first.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Contract deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contracts/{contractId}/clauses": {
+      "get": {
+        "operationId": "listContractClauses",
+        "summary": "List contract clauses",
+        "description": "Returns the clauses associated with a contract.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of contract clauses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Clause" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "addContractClause",
+        "summary": "Add a clause to a contract",
+        "description": "Adds a new clause to an existing contract.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClauseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Clause added successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Clause"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contracts/{contractId}/approvals": {
+      "get": {
+        "operationId": "listContractApprovals",
+        "summary": "List contract approval requests",
+        "description": "Returns the approval workflow history for a contract.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of approval requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Approval" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "submitContractForApproval",
+        "summary": "Submit contract for approval",
+        "description": "Submits a contract for approval. The contract must be in draft or in_negotiation status.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Approval request created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Approval"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contracts/{contractId}/renew": {
+      "post": {
+        "operationId": "renewContract",
+        "summary": "Renew a contract",
+        "description": "Initiates a renewal for an active or expiring contract. Creates a new contract version linked to the original.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "new_end_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "The new end date for the renewed contract."
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Notes regarding the renewal."
+                  }
+                },
+                "required": ["new_end_date"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contract renewed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/contracts/{contractId}/terminate": {
+      "post": {
+        "operationId": "terminateContract",
+        "summary": "Terminate a contract",
+        "description": "Terminates an active contract. Records the termination date and reason.",
+        "tags": ["Contracts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ContractIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "termination_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Effective date of termination."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Reason for termination."
+                  }
+                },
+                "required": ["termination_date", "reason"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contract terminated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/entities": {
+      "get": {
+        "operationId": "listEntities",
+        "summary": "List corporate entities",
+        "description": "Returns a paginated list of corporate entities (subsidiaries, holdings, etc.).",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by entity type.",
+            "schema": {
+              "type": "string",
+              "enum": ["subsidiary", "holding", "branch", "joint_venture", "partnership", "other"]
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "description": "Filter by country (ISO 3166-1 alpha-2 code).",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 2
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by entity status.",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "inactive", "dissolved", "in_liquidation"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across entity name and registration number.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of entities.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createEntity",
+        "summary": "Create a corporate entity",
+        "description": "Creates a new corporate entity record.",
+        "tags": ["Entities"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Entity created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entity"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/entities/{entityId}": {
+      "get": {
+        "operationId": "getEntity",
+        "summary": "Get a corporate entity",
+        "description": "Returns the full details of a single corporate entity.",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entity details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entity"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateEntity",
+        "summary": "Update a corporate entity",
+        "description": "Updates an existing corporate entity.",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entity updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entity"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEntity",
+        "summary": "Delete a corporate entity",
+        "description": "Deletes a corporate entity. Only entities with no active contracts or linked records can be deleted.",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Entity deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/entities/{entityId}/mandates": {
+      "get": {
+        "operationId": "listEntityMandates",
+        "summary": "List mandates for an entity",
+        "description": "Returns the list of mandates (directors, officers, board members) for a corporate entity.",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of mandates.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Mandate" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createEntityMandate",
+        "summary": "Create a mandate for an entity",
+        "description": "Creates a new mandate (director, officer, or board member appointment) for a corporate entity.",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MandateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mandate created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mandate"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/entities/{entityId}/shareholders": {
+      "get": {
+        "operationId": "listEntityShareholders",
+        "summary": "List shareholders for an entity",
+        "description": "Returns the shareholder structure for a corporate entity.",
+        "tags": ["Entities"],
+        "parameters": [
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shareholders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Shareholder" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/claims": {
+      "get": {
+        "operationId": "listClaims",
+        "summary": "List claims and litigation cases",
+        "description": "Returns a paginated list of claims and litigation cases.",
+        "tags": ["Claims"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by claim status.",
+            "schema": {
+              "type": "string",
+              "enum": ["open", "in_progress", "settled", "closed", "appealed"]
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by claim type.",
+            "schema": {
+              "type": "string",
+              "enum": ["litigation", "arbitration", "mediation", "regulatory", "insurance", "other"]
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "description": "Filter by related entity ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across claim reference and description.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of claims.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createClaim",
+        "summary": "Create a claim",
+        "description": "Creates a new claim or litigation case.",
+        "tags": ["Claims"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Claim created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Claim"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/claims/{claimId}": {
+      "get": {
+        "operationId": "getClaim",
+        "summary": "Get a claim",
+        "description": "Returns the full details of a single claim or litigation case.",
+        "tags": ["Claims"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ClaimIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Claim details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Claim"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateClaim",
+        "summary": "Update a claim",
+        "description": "Updates an existing claim or litigation case.",
+        "tags": ["Claims"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ClaimIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claim updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Claim"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteClaim",
+        "summary": "Delete a claim",
+        "description": "Deletes a claim. Only claims in open status with no linked proceedings can be deleted.",
+        "tags": ["Claims"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ClaimIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Claim deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/vendors": {
+      "get": {
+        "operationId": "listVendors",
+        "summary": "List vendors",
+        "description": "Returns a paginated list of vendors with their assessment and categorization details.",
+        "tags": ["Vendors"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by vendor category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "risk_level",
+            "in": "query",
+            "description": "Filter by risk level.",
+            "schema": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by vendor status.",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "inactive", "under_review", "blocked"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across vendor name and reference.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of vendors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createVendor",
+        "summary": "Create a vendor",
+        "description": "Creates a new vendor record.",
+        "tags": ["Vendors"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vendor created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vendor"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/vendors/{vendorId}": {
+      "get": {
+        "operationId": "getVendor",
+        "summary": "Get a vendor",
+        "description": "Returns the full details of a single vendor.",
+        "tags": ["Vendors"],
+        "parameters": [
+          { "$ref": "#/components/parameters/VendorIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vendor"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateVendor",
+        "summary": "Update a vendor",
+        "description": "Updates an existing vendor record.",
+        "tags": ["Vendors"],
+        "parameters": [
+          { "$ref": "#/components/parameters/VendorIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vendor updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vendor"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteVendor",
+        "summary": "Delete a vendor",
+        "description": "Deletes a vendor. Only vendors with no active contracts can be deleted.",
+        "tags": ["Vendors"],
+        "parameters": [
+          { "$ref": "#/components/parameters/VendorIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Vendor deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/intellectual-property": {
+      "get": {
+        "operationId": "listIntellectualProperty",
+        "summary": "List intellectual property assets",
+        "description": "Returns a paginated list of intellectual property assets including trademarks, patents, domain names, copyrights, and design rights.",
+        "tags": ["Intellectual Property"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by IP asset type.",
+            "schema": {
+              "type": "string",
+              "enum": ["trademark", "patent", "domain_name", "copyright", "design_right"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by IP asset status.",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "registered", "granted", "expired", "abandoned", "opposed"]
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "description": "Filter by owning entity ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across IP title, reference number, and description.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of IP assets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IPAssetListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createIntellectualProperty",
+        "summary": "Create an intellectual property asset",
+        "description": "Creates a new intellectual property asset record.",
+        "tags": ["Intellectual Property"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IPAssetCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "IP asset created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IPAsset"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/intellectual-property/{ipAssetId}": {
+      "get": {
+        "operationId": "getIntellectualProperty",
+        "summary": "Get an intellectual property asset",
+        "description": "Returns the full details of a single IP asset.",
+        "tags": ["Intellectual Property"],
+        "parameters": [
+          { "$ref": "#/components/parameters/IPAssetIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "IP asset details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IPAsset"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateIntellectualProperty",
+        "summary": "Update an intellectual property asset",
+        "description": "Updates an existing IP asset record.",
+        "tags": ["Intellectual Property"],
+        "parameters": [
+          { "$ref": "#/components/parameters/IPAssetIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IPAssetUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "IP asset updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IPAsset"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteIntellectualProperty",
+        "summary": "Delete an intellectual property asset",
+        "description": "Deletes an IP asset record.",
+        "tags": ["Intellectual Property"],
+        "parameters": [
+          { "$ref": "#/components/parameters/IPAssetIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "IP asset deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/real-estate": {
+      "get": {
+        "operationId": "listRealEstate",
+        "summary": "List real estate assets",
+        "description": "Returns a paginated list of real estate assets and property records.",
+        "tags": ["Real Estate"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by property type.",
+            "schema": {
+              "type": "string",
+              "enum": ["office", "warehouse", "retail", "industrial", "land", "residential", "other"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by property status.",
+            "schema": {
+              "type": "string",
+              "enum": ["owned", "leased", "subleased", "vacant", "under_construction"]
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "description": "Filter by country (ISO 3166-1 alpha-2 code).",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 2
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across property name and address.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of real estate assets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealEstateListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createRealEstate",
+        "summary": "Create a real estate asset",
+        "description": "Creates a new real estate asset record.",
+        "tags": ["Real Estate"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RealEstateCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Real estate asset created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealEstate"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/real-estate/{propertyId}": {
+      "get": {
+        "operationId": "getRealEstate",
+        "summary": "Get a real estate asset",
+        "description": "Returns the full details of a single real estate asset.",
+        "tags": ["Real Estate"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PropertyIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Real estate asset details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealEstate"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateRealEstate",
+        "summary": "Update a real estate asset",
+        "description": "Updates an existing real estate asset record.",
+        "tags": ["Real Estate"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PropertyIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RealEstateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Real estate asset updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealEstate"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteRealEstate",
+        "summary": "Delete a real estate asset",
+        "description": "Deletes a real estate asset record.",
+        "tags": ["Real Estate"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PropertyIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Real estate asset deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/privacy/data-processing-records": {
+      "get": {
+        "operationId": "listDataProcessingRecords",
+        "summary": "List data processing records",
+        "description": "Returns a paginated list of data processing records for GDPR compliance.",
+        "tags": ["Privacy"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "legal_basis",
+            "in": "query",
+            "description": "Filter by legal basis for processing.",
+            "schema": {
+              "type": "string",
+              "enum": ["consent", "contract", "legal_obligation", "vital_interests", "public_task", "legitimate_interests"]
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "description": "Filter by data controller entity ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across processing activity name and purpose.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of data processing records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataProcessingRecordListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createDataProcessingRecord",
+        "summary": "Create a data processing record",
+        "description": "Creates a new data processing record for GDPR register of processing activities.",
+        "tags": ["Privacy"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataProcessingRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Data processing record created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataProcessingRecord"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/privacy/data-processing-records/{recordId}": {
+      "get": {
+        "operationId": "getDataProcessingRecord",
+        "summary": "Get a data processing record",
+        "description": "Returns the full details of a single data processing record.",
+        "tags": ["Privacy"],
+        "parameters": [
+          { "$ref": "#/components/parameters/RecordIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data processing record details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataProcessingRecord"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateDataProcessingRecord",
+        "summary": "Update a data processing record",
+        "description": "Updates an existing data processing record.",
+        "tags": ["Privacy"],
+        "parameters": [
+          { "$ref": "#/components/parameters/RecordIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataProcessingRecordUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data processing record updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataProcessingRecord"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDataProcessingRecord",
+        "summary": "Delete a data processing record",
+        "description": "Deletes a data processing record.",
+        "tags": ["Privacy"],
+        "parameters": [
+          { "$ref": "#/components/parameters/RecordIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Data processing record deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/privacy/risk-assessments": {
+      "get": {
+        "operationId": "listRiskAssessments",
+        "summary": "List risk assessments",
+        "description": "Returns a paginated list of risk assessments and data protection impact assessments (DPIAs).",
+        "tags": ["Privacy"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by assessment status.",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "in_review", "approved", "requires_action", "closed"]
+            }
+          },
+          {
+            "name": "risk_level",
+            "in": "query",
+            "description": "Filter by risk level.",
+            "schema": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of risk assessments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskAssessmentListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createRiskAssessment",
+        "summary": "Create a risk assessment",
+        "description": "Creates a new risk assessment or data protection impact assessment.",
+        "tags": ["Privacy"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskAssessmentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Risk assessment created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskAssessment"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/privacy/incidents": {
+      "get": {
+        "operationId": "listPrivacyIncidents",
+        "summary": "List privacy incidents",
+        "description": "Returns a paginated list of privacy and data breach incidents.",
+        "tags": ["Privacy"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "severity",
+            "in": "query",
+            "description": "Filter by incident severity.",
+            "schema": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by incident status.",
+            "schema": {
+              "type": "string",
+              "enum": ["reported", "investigating", "contained", "resolved", "closed"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of privacy incidents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyIncidentListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createPrivacyIncident",
+        "summary": "Report a privacy incident",
+        "description": "Reports a new privacy or data breach incident.",
+        "tags": ["Privacy"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyIncidentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Privacy incident reported successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyIncident"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/documents": {
+      "get": {
+        "operationId": "listDocuments",
+        "summary": "List documents",
+        "description": "Returns a paginated list of documents. Documents can be filtered by the resource they are attached to.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          { "$ref": "#/components/parameters/SortParam" },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "description": "Filter by the type of resource the document is attached to.",
+            "schema": {
+              "type": "string",
+              "enum": ["contract", "entity", "claim", "vendor", "ip_asset", "real_estate", "data_processing_record", "risk_assessment", "incident"]
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "description": "Filter by the ID of the resource the document is attached to.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across document name and description.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "uploadDocument",
+        "summary": "Upload a document",
+        "description": "Uploads a new document and optionally attaches it to a resource (contract, entity, claim, etc.).",
+        "tags": ["Documents"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The document file to upload."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name for the document."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of the document."
+                  },
+                  "resource_type": {
+                    "type": "string",
+                    "description": "Type of resource to attach the document to.",
+                    "enum": ["contract", "entity", "claim", "vendor", "ip_asset", "real_estate", "data_processing_record", "risk_assessment", "incident"]
+                  },
+                  "resource_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the resource to attach the document to."
+                  },
+                  "tags": {
+                    "type": "string",
+                    "description": "Comma-separated list of tags."
+                  }
+                },
+                "required": ["file", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "413": {
+            "description": "File too large. Maximum file size is 100MB.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/documents/{documentId}": {
+      "get": {
+        "operationId": "getDocument",
+        "summary": "Get document metadata",
+        "description": "Returns the metadata of a single document.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DocumentIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDocument",
+        "summary": "Delete a document",
+        "description": "Deletes a document and its file from storage.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DocumentIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Document deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/documents/{documentId}/download": {
+      "get": {
+        "operationId": "downloadDocument",
+        "summary": "Download a document file",
+        "description": "Downloads the binary content of a document.",
+        "tags": ["Documents"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DocumentIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document file content.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "summary": "List users",
+        "description": "Returns a paginated list of users with their roles and access permissions.",
+        "tags": ["Users"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "Filter by user role.",
+            "schema": {
+              "type": "string",
+              "enum": ["admin", "legal_manager", "legal_user", "business_user", "read_only"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by user status.",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "inactive", "invited", "suspended"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search across user name and email.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createUser",
+        "summary": "Create a user",
+        "description": "Creates a new user and sends an invitation email.",
+        "tags": ["Users"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get current user profile",
+        "description": "Returns the profile of the currently authenticated user.",
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Current user profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "operationId": "getUser",
+        "summary": "Get a user",
+        "description": "Returns the full details of a single user.",
+        "tags": ["Users"],
+        "parameters": [
+          { "$ref": "#/components/parameters/UserIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateUser",
+        "summary": "Update a user",
+        "description": "Updates an existing user's profile and permissions.",
+        "tags": ["Users"],
+        "parameters": [
+          { "$ref": "#/components/parameters/UserIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUser",
+        "summary": "Deactivate a user",
+        "description": "Deactivates a user account. The user is not permanently deleted but is prevented from accessing the system.",
+        "tags": ["Users"],
+        "parameters": [
+          { "$ref": "#/components/parameters/UserIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deactivated successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/webhooks": {
+      "get": {
+        "operationId": "listWebhooks",
+        "summary": "List webhook subscriptions",
+        "description": "Returns a list of all webhook subscriptions for the current application.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/PageSizeParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of webhook subscriptions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookListResponse"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createWebhook",
+        "summary": "Create a webhook subscription",
+        "description": "Creates a new webhook subscription to receive real-time notifications for resource changes.",
+        "tags": ["Webhooks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook subscription created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/webhooks/{webhookId}": {
+      "get": {
+        "operationId": "getWebhook",
+        "summary": "Get a webhook subscription",
+        "description": "Returns the details of a single webhook subscription.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WebhookIdParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook subscription details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "put": {
+        "operationId": "updateWebhook",
+        "summary": "Update a webhook subscription",
+        "description": "Updates an existing webhook subscription.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WebhookIdParam" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook subscription updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/UnprocessableEntity" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhook",
+        "summary": "Delete a webhook subscription",
+        "description": "Deletes a webhook subscription.",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "$ref": "#/components/parameters/WebhookIdParam" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Webhook subscription deleted successfully."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authorization code flow for Legisway. Register your application in the Legisway Administration portal to obtain a Client ID and Client Secret. Access tokens are valid for 3600 seconds (1 hour). Refresh tokens are valid for 30 days.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://auth.legisway.com/oauth2/authorize",
+            "tokenUrl": "https://auth.legisway.com/oauth2/token",
+            "refreshUrl": "https://auth.legisway.com/oauth2/token",
+            "scopes": {
+              "contracts:read": "Read access to contracts",
+              "contracts:write": "Create and update contracts",
+              "contracts:delete": "Delete contracts",
+              "entities:read": "Read access to corporate entities",
+              "entities:write": "Create and update corporate entities",
+              "entities:delete": "Delete corporate entities",
+              "claims:read": "Read access to claims and litigation",
+              "claims:write": "Create and update claims",
+              "claims:delete": "Delete claims",
+              "vendors:read": "Read access to vendors",
+              "vendors:write": "Create and update vendors",
+              "vendors:delete": "Delete vendors",
+              "ip:read": "Read access to intellectual property assets",
+              "ip:write": "Create and update IP assets",
+              "ip:delete": "Delete IP assets",
+              "real_estate:read": "Read access to real estate assets",
+              "real_estate:write": "Create and update real estate assets",
+              "real_estate:delete": "Delete real estate assets",
+              "privacy:read": "Read access to privacy records, risk assessments, and incidents",
+              "privacy:write": "Create and update privacy records",
+              "privacy:delete": "Delete privacy records",
+              "documents:read": "Read and download documents",
+              "documents:write": "Upload documents",
+              "documents:delete": "Delete documents",
+              "users:read": "Read access to user profiles",
+              "users:write": "Create and update users",
+              "users:delete": "Deactivate users",
+              "webhooks:read": "Read webhook subscriptions",
+              "webhooks:write": "Create and update webhooks",
+              "webhooks:delete": "Delete webhooks"
+            }
+          },
+          "clientCredentials": {
+            "tokenUrl": "https://auth.legisway.com/oauth2/token",
+            "scopes": {
+              "contracts:read": "Read access to contracts",
+              "contracts:write": "Create and update contracts",
+              "entities:read": "Read access to corporate entities",
+              "entities:write": "Create and update corporate entities",
+              "claims:read": "Read access to claims and litigation",
+              "claims:write": "Create and update claims",
+              "vendors:read": "Read access to vendors",
+              "vendors:write": "Create and update vendors",
+              "ip:read": "Read access to intellectual property assets",
+              "ip:write": "Create and update IP assets",
+              "real_estate:read": "Read access to real estate assets",
+              "real_estate:write": "Create and update real estate assets",
+              "privacy:read": "Read access to privacy records",
+              "privacy:write": "Create and update privacy records",
+              "documents:read": "Read and download documents",
+              "documents:write": "Upload documents",
+              "users:read": "Read access to user profiles",
+              "webhooks:read": "Read webhook subscriptions",
+              "webhooks:write": "Create and update webhooks"
+            }
+          }
+        }
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "description": "API key authentication. Include the API key in the X-API-Key request header. API keys can be generated in the Legisway Administration portal under Settings > API Keys. Each API key is scoped to specific permissions and can be revoked at any time.",
+        "name": "X-API-Key",
+        "in": "header"
+      }
+    },
+    "parameters": {
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination (1-based).",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "PageSizeParam": {
+        "name": "page_size",
+        "in": "query",
+        "description": "Number of records per page. Maximum 100.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 25
+        }
+      },
+      "SortParam": {
+        "name": "sort",
+        "in": "query",
+        "description": "Sort field and direction. Prefix with '-' for descending order (e.g., '-created_at').",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ContractIdParam": {
+        "name": "contractId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the contract.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "EntityIdParam": {
+        "name": "entityId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the corporate entity.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "ClaimIdParam": {
+        "name": "claimId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the claim.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "VendorIdParam": {
+        "name": "vendorId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the vendor.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "IPAssetIdParam": {
+        "name": "ipAssetId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the intellectual property asset.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "PropertyIdParam": {
+        "name": "propertyId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the real estate property.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "RecordIdParam": {
+        "name": "recordId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the data processing record.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "DocumentIdParam": {
+        "name": "documentId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the document.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "UserIdParam": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the user.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "WebhookIdParam": {
+        "name": "webhookId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the webhook subscription.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request. The request body or parameters are invalid.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized. Authentication credentials are missing or invalid.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden. The authenticated user does not have permission to perform this action.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found. The requested resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict. The request conflicts with the current state of the resource.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Unprocessable entity. The request is well-formed but contains semantic errors.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too many requests. Rate limit exceeded. Retry after the period indicated in the Retry-After header.",
+        "headers": {
+          "Retry-After": {
+            "description": "Number of seconds to wait before retrying.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "X-RateLimit-Limit": {
+            "description": "Maximum number of requests per window.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "X-RateLimit-Remaining": {
+            "description": "Number of requests remaining in the current window.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message."
+              },
+              "details": {
+                "type": "array",
+                "description": "Additional error details for validation errors.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "The field that caused the error."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Description of the validation error."
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["code", "message"]
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "Current page number."
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "Number of records per page."
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of records."
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages."
+          }
+        }
+      },
+      "Contract": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier."
+          },
+          "reference": {
+            "type": "string",
+            "description": "Contract reference number."
+          },
+          "title": {
+            "type": "string",
+            "description": "Contract title."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the contract."
+          },
+          "type": {
+            "type": "string",
+            "description": "Contract type (e.g., NDA, service agreement, licensing)."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "in_negotiation", "pending_approval", "approved", "active", "expired", "terminated", "renewed"],
+            "description": "Current status of the contract."
+          },
+          "counterparty_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the counterparty (vendor or entity)."
+          },
+          "counterparty_name": {
+            "type": "string",
+            "description": "Name of the counterparty."
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the owning entity."
+          },
+          "entity_name": {
+            "type": "string",
+            "description": "Name of the owning entity."
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "description": "Total contract value."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code (ISO 4217).",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Contract start date."
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Contract end date."
+          },
+          "renewal_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Next renewal date."
+          },
+          "notice_period_days": {
+            "type": "integer",
+            "description": "Notice period in days before renewal/expiry."
+          },
+          "auto_renew": {
+            "type": "boolean",
+            "description": "Whether the contract auto-renews."
+          },
+          "responsible_user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user responsible for this contract."
+          },
+          "responsible_user_name": {
+            "type": "string",
+            "description": "Name of the responsible user."
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Tags associated with the contract."
+          },
+          "custom_fields": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Custom field values."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the contract was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the contract was last updated."
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who created the contract."
+          }
+        }
+      },
+      "ContractCreate": {
+        "type": "object",
+        "required": ["title", "type", "entity_id"],
+        "properties": {
+          "reference": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "type": "string" },
+          "counterparty_id": { "type": "string", "format": "uuid" },
+          "counterparty_name": { "type": "string" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "value": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" },
+          "renewal_date": { "type": "string", "format": "date" },
+          "notice_period_days": { "type": "integer" },
+          "auto_renew": { "type": "boolean", "default": false },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ContractUpdate": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "in_negotiation", "pending_approval", "approved", "active", "expired", "terminated", "renewed"]
+          },
+          "counterparty_id": { "type": "string", "format": "uuid" },
+          "counterparty_name": { "type": "string" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "value": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" },
+          "renewal_date": { "type": "string", "format": "date" },
+          "notice_period_days": { "type": "integer" },
+          "auto_renew": { "type": "boolean" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ContractListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Contract" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "Clause": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "contract_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "description": "Clause title." },
+          "text": { "type": "string", "description": "Full clause text." },
+          "type": {
+            "type": "string",
+            "description": "Clause type (e.g., termination, liability, confidentiality, indemnification)."
+          },
+          "position": { "type": "integer", "description": "Order position within the contract." },
+          "is_standard": { "type": "boolean", "description": "Whether this is a standard clause from the clause library." },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ClauseCreate": {
+        "type": "object",
+        "required": ["title", "text"],
+        "properties": {
+          "title": { "type": "string" },
+          "text": { "type": "string" },
+          "type": { "type": "string" },
+          "position": { "type": "integer" },
+          "is_standard": { "type": "boolean", "default": false }
+        }
+      },
+      "Approval": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "contract_id": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected", "cancelled"],
+            "description": "Approval status."
+          },
+          "approver_id": { "type": "string", "format": "uuid" },
+          "approver_name": { "type": "string" },
+          "requested_by_id": { "type": "string", "format": "uuid" },
+          "requested_by_name": { "type": "string" },
+          "comments": { "type": "string" },
+          "decided_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ApprovalRequest": {
+        "type": "object",
+        "required": ["approver_id"],
+        "properties": {
+          "approver_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user to approve the contract."
+          },
+          "comments": {
+            "type": "string",
+            "description": "Comments for the approver."
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Due date for the approval decision."
+          }
+        }
+      },
+      "Entity": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "description": "Legal name of the entity." },
+          "short_name": { "type": "string", "description": "Short or trading name." },
+          "type": {
+            "type": "string",
+            "enum": ["subsidiary", "holding", "branch", "joint_venture", "partnership", "other"],
+            "description": "Entity type."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "dissolved", "in_liquidation"],
+            "description": "Entity status."
+          },
+          "registration_number": { "type": "string", "description": "Company registration or incorporation number." },
+          "tax_id": { "type": "string", "description": "Tax identification number (VAT/EIN)." },
+          "legal_form": { "type": "string", "description": "Legal form (e.g., LLC, SA, GmbH, BV, Ltd)." },
+          "incorporation_date": { "type": "string", "format": "date", "description": "Date of incorporation." },
+          "country": { "type": "string", "description": "Country of incorporation (ISO 3166-1 alpha-2).", "minLength": 2, "maxLength": 2 },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "parent_entity_id": { "type": "string", "format": "uuid", "description": "ID of the parent entity." },
+          "parent_entity_name": { "type": "string", "description": "Name of the parent entity." },
+          "share_capital": { "type": "number", "format": "double", "description": "Share capital amount." },
+          "share_capital_currency": { "type": "string", "description": "Currency of share capital (ISO 4217).", "minLength": 3, "maxLength": 3 },
+          "fiscal_year_end": { "type": "string", "description": "Fiscal year end date (MM-DD format)." },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "responsible_user_name": { "type": "string" },
+          "custom_fields": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EntityCreate": {
+        "type": "object",
+        "required": ["name", "type", "country"],
+        "properties": {
+          "name": { "type": "string" },
+          "short_name": { "type": "string" },
+          "type": { "type": "string", "enum": ["subsidiary", "holding", "branch", "joint_venture", "partnership", "other"] },
+          "registration_number": { "type": "string" },
+          "tax_id": { "type": "string" },
+          "legal_form": { "type": "string" },
+          "incorporation_date": { "type": "string", "format": "date" },
+          "country": { "type": "string", "minLength": 2, "maxLength": 2 },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "parent_entity_id": { "type": "string", "format": "uuid" },
+          "share_capital": { "type": "number", "format": "double" },
+          "share_capital_currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "fiscal_year_end": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "EntityUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "short_name": { "type": "string" },
+          "type": { "type": "string", "enum": ["subsidiary", "holding", "branch", "joint_venture", "partnership", "other"] },
+          "status": { "type": "string", "enum": ["active", "inactive", "dissolved", "in_liquidation"] },
+          "registration_number": { "type": "string" },
+          "tax_id": { "type": "string" },
+          "legal_form": { "type": "string" },
+          "incorporation_date": { "type": "string", "format": "date" },
+          "country": { "type": "string", "minLength": 2, "maxLength": 2 },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "parent_entity_id": { "type": "string", "format": "uuid" },
+          "share_capital": { "type": "number", "format": "double" },
+          "share_capital_currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "fiscal_year_end": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "EntityListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Entity" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "Mandate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "person_name": { "type": "string", "description": "Name of the person holding the mandate." },
+          "role": {
+            "type": "string",
+            "description": "Role or title (e.g., Director, CEO, Board Member, Secretary)."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["director", "officer", "board_member", "statutory_auditor", "secretary", "other"],
+            "description": "Mandate type."
+          },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" },
+          "is_active": { "type": "boolean" },
+          "nationality": { "type": "string" },
+          "notes": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MandateCreate": {
+        "type": "object",
+        "required": ["person_name", "role", "type", "start_date"],
+        "properties": {
+          "person_name": { "type": "string" },
+          "role": { "type": "string" },
+          "type": { "type": "string", "enum": ["director", "officer", "board_member", "statutory_auditor", "secretary", "other"] },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" },
+          "nationality": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      },
+      "Shareholder": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "shareholder_name": { "type": "string", "description": "Name of the shareholder (person or entity)." },
+          "shareholder_type": {
+            "type": "string",
+            "enum": ["individual", "corporate"],
+            "description": "Whether the shareholder is an individual or corporate entity."
+          },
+          "shareholder_entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "If corporate, the ID of the shareholder entity in Legisway."
+          },
+          "shares_held": { "type": "integer", "description": "Number of shares held." },
+          "percentage": { "type": "number", "format": "double", "description": "Percentage of ownership." },
+          "share_class": { "type": "string", "description": "Class of shares (e.g., ordinary, preferred)." },
+          "acquisition_date": { "type": "string", "format": "date" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Claim": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "reference": { "type": "string", "description": "Claim reference number." },
+          "title": { "type": "string", "description": "Claim title or case name." },
+          "description": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["litigation", "arbitration", "mediation", "regulatory", "insurance", "other"],
+            "description": "Type of claim or dispute."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "in_progress", "settled", "closed", "appealed"],
+            "description": "Current claim status."
+          },
+          "entity_id": { "type": "string", "format": "uuid", "description": "ID of the related entity." },
+          "entity_name": { "type": "string" },
+          "opposing_party": { "type": "string", "description": "Name of the opposing party." },
+          "jurisdiction": { "type": "string", "description": "Jurisdiction (court/arbitration body)." },
+          "case_number": { "type": "string", "description": "Court or case reference number." },
+          "filing_date": { "type": "string", "format": "date" },
+          "hearing_date": { "type": "string", "format": "date" },
+          "amount_claimed": { "type": "number", "format": "double", "description": "Amount claimed." },
+          "amount_reserved": { "type": "number", "format": "double", "description": "Amount reserved (provision)." },
+          "amount_settled": { "type": "number", "format": "double", "description": "Settlement amount (if settled)." },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "our_role": {
+            "type": "string",
+            "enum": ["claimant", "defendant", "third_party"],
+            "description": "Our role in the claim."
+          },
+          "external_counsel": { "type": "string", "description": "Name of external legal counsel." },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "responsible_user_name": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ClaimCreate": {
+        "type": "object",
+        "required": ["title", "type", "entity_id"],
+        "properties": {
+          "reference": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "type": "string", "enum": ["litigation", "arbitration", "mediation", "regulatory", "insurance", "other"] },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "opposing_party": { "type": "string" },
+          "jurisdiction": { "type": "string" },
+          "case_number": { "type": "string" },
+          "filing_date": { "type": "string", "format": "date" },
+          "hearing_date": { "type": "string", "format": "date" },
+          "amount_claimed": { "type": "number", "format": "double" },
+          "amount_reserved": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "our_role": { "type": "string", "enum": ["claimant", "defendant", "third_party"] },
+          "external_counsel": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ClaimUpdate": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "type": "string", "enum": ["litigation", "arbitration", "mediation", "regulatory", "insurance", "other"] },
+          "status": { "type": "string", "enum": ["open", "in_progress", "settled", "closed", "appealed"] },
+          "opposing_party": { "type": "string" },
+          "jurisdiction": { "type": "string" },
+          "case_number": { "type": "string" },
+          "filing_date": { "type": "string", "format": "date" },
+          "hearing_date": { "type": "string", "format": "date" },
+          "amount_claimed": { "type": "number", "format": "double" },
+          "amount_reserved": { "type": "number", "format": "double" },
+          "amount_settled": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "our_role": { "type": "string", "enum": ["claimant", "defendant", "third_party"] },
+          "external_counsel": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "ClaimListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Claim" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "Vendor": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "description": "Vendor name." },
+          "reference": { "type": "string", "description": "Internal vendor reference." },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "under_review", "blocked"],
+            "description": "Vendor status."
+          },
+          "category": { "type": "string", "description": "Vendor category." },
+          "risk_level": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Risk level assessment."
+          },
+          "country": { "type": "string", "description": "Country (ISO 3166-1 alpha-2).", "minLength": 2, "maxLength": 2 },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "contact_name": { "type": "string" },
+          "contact_email": { "type": "string", "format": "email" },
+          "contact_phone": { "type": "string" },
+          "website": { "type": "string", "format": "uri" },
+          "tax_id": { "type": "string" },
+          "registration_number": { "type": "string" },
+          "soc_report_date": { "type": "string", "format": "date", "description": "Date of latest SOC report." },
+          "soc_report_type": { "type": "string", "description": "SOC report type (e.g., SOC 1, SOC 2 Type I, SOC 2 Type II)." },
+          "last_assessment_date": { "type": "string", "format": "date" },
+          "next_assessment_date": { "type": "string", "format": "date" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "responsible_user_name": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "VendorCreate": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "category": { "type": "string" },
+          "risk_level": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "country": { "type": "string", "minLength": 2, "maxLength": 2 },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "contact_name": { "type": "string" },
+          "contact_email": { "type": "string", "format": "email" },
+          "contact_phone": { "type": "string" },
+          "website": { "type": "string", "format": "uri" },
+          "tax_id": { "type": "string" },
+          "registration_number": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "VendorUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "inactive", "under_review", "blocked"] },
+          "category": { "type": "string" },
+          "risk_level": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "country": { "type": "string", "minLength": 2, "maxLength": 2 },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "contact_name": { "type": "string" },
+          "contact_email": { "type": "string", "format": "email" },
+          "contact_phone": { "type": "string" },
+          "website": { "type": "string", "format": "uri" },
+          "tax_id": { "type": "string" },
+          "registration_number": { "type": "string" },
+          "soc_report_date": { "type": "string", "format": "date" },
+          "soc_report_type": { "type": "string" },
+          "last_assessment_date": { "type": "string", "format": "date" },
+          "next_assessment_date": { "type": "string", "format": "date" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "VendorListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Vendor" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "IPAsset": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "description": "Title or name of the IP asset." },
+          "reference_number": { "type": "string", "description": "Registration or application number." },
+          "type": {
+            "type": "string",
+            "enum": ["trademark", "patent", "domain_name", "copyright", "design_right"],
+            "description": "Type of IP asset."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "registered", "granted", "expired", "abandoned", "opposed"],
+            "description": "Current status."
+          },
+          "description": { "type": "string" },
+          "entity_id": { "type": "string", "format": "uuid", "description": "ID of the owning entity." },
+          "entity_name": { "type": "string" },
+          "classes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Nice classification classes (for trademarks)."
+          },
+          "jurisdictions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Countries or regions where the IP is registered/protected."
+          },
+          "filing_date": { "type": "string", "format": "date" },
+          "registration_date": { "type": "string", "format": "date" },
+          "expiry_date": { "type": "string", "format": "date" },
+          "renewal_date": { "type": "string", "format": "date" },
+          "inventor": { "type": "string", "description": "Inventor name (for patents)." },
+          "agent": { "type": "string", "description": "IP agent or attorney." },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "responsible_user_name": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "IPAssetCreate": {
+        "type": "object",
+        "required": ["title", "type", "entity_id"],
+        "properties": {
+          "title": { "type": "string" },
+          "reference_number": { "type": "string" },
+          "type": { "type": "string", "enum": ["trademark", "patent", "domain_name", "copyright", "design_right"] },
+          "description": { "type": "string" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "classes": { "type": "array", "items": { "type": "string" } },
+          "jurisdictions": { "type": "array", "items": { "type": "string" } },
+          "filing_date": { "type": "string", "format": "date" },
+          "registration_date": { "type": "string", "format": "date" },
+          "expiry_date": { "type": "string", "format": "date" },
+          "renewal_date": { "type": "string", "format": "date" },
+          "inventor": { "type": "string" },
+          "agent": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "IPAssetUpdate": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "reference_number": { "type": "string" },
+          "type": { "type": "string", "enum": ["trademark", "patent", "domain_name", "copyright", "design_right"] },
+          "status": { "type": "string", "enum": ["pending", "registered", "granted", "expired", "abandoned", "opposed"] },
+          "description": { "type": "string" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "classes": { "type": "array", "items": { "type": "string" } },
+          "jurisdictions": { "type": "array", "items": { "type": "string" } },
+          "filing_date": { "type": "string", "format": "date" },
+          "registration_date": { "type": "string", "format": "date" },
+          "expiry_date": { "type": "string", "format": "date" },
+          "renewal_date": { "type": "string", "format": "date" },
+          "inventor": { "type": "string" },
+          "agent": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "IPAssetListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/IPAsset" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "RealEstate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "description": "Property name." },
+          "reference": { "type": "string", "description": "Internal reference." },
+          "type": {
+            "type": "string",
+            "enum": ["office", "warehouse", "retail", "industrial", "land", "residential", "other"],
+            "description": "Property type."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["owned", "leased", "subleased", "vacant", "under_construction"],
+            "description": "Property status."
+          },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "entity_id": { "type": "string", "format": "uuid", "description": "ID of the owning/leasing entity." },
+          "entity_name": { "type": "string" },
+          "area_sqm": { "type": "number", "format": "double", "description": "Area in square meters." },
+          "lease_start_date": { "type": "string", "format": "date" },
+          "lease_end_date": { "type": "string", "format": "date" },
+          "monthly_rent": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "landlord": { "type": "string", "description": "Landlord name (if leased)." },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "responsible_user_name": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RealEstateCreate": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "type": { "type": "string", "enum": ["office", "warehouse", "retail", "industrial", "land", "residential", "other"] },
+          "status": { "type": "string", "enum": ["owned", "leased", "subleased", "vacant", "under_construction"] },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "area_sqm": { "type": "number", "format": "double" },
+          "lease_start_date": { "type": "string", "format": "date" },
+          "lease_end_date": { "type": "string", "format": "date" },
+          "monthly_rent": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "landlord": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "RealEstateUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "reference": { "type": "string" },
+          "type": { "type": "string", "enum": ["office", "warehouse", "retail", "industrial", "land", "residential", "other"] },
+          "status": { "type": "string", "enum": ["owned", "leased", "subleased", "vacant", "under_construction"] },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "area_sqm": { "type": "number", "format": "double" },
+          "lease_start_date": { "type": "string", "format": "date" },
+          "lease_end_date": { "type": "string", "format": "date" },
+          "monthly_rent": { "type": "number", "format": "double" },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+          "landlord": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "RealEstateListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RealEstate" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "DataProcessingRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "description": "Name of the processing activity." },
+          "purpose": { "type": "string", "description": "Purpose of data processing." },
+          "legal_basis": {
+            "type": "string",
+            "enum": ["consent", "contract", "legal_obligation", "vital_interests", "public_task", "legitimate_interests"],
+            "description": "Legal basis under GDPR Article 6."
+          },
+          "data_controller_entity_id": { "type": "string", "format": "uuid" },
+          "data_controller_name": { "type": "string" },
+          "data_categories": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categories of personal data processed."
+          },
+          "data_subject_categories": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categories of data subjects."
+          },
+          "recipients": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Recipients or categories of recipients."
+          },
+          "international_transfers": {
+            "type": "boolean",
+            "description": "Whether data is transferred outside the EEA."
+          },
+          "transfer_safeguards": {
+            "type": "string",
+            "description": "Safeguards for international transfers (e.g., SCCs, adequacy decision)."
+          },
+          "retention_period": { "type": "string", "description": "Data retention period." },
+          "security_measures": { "type": "string", "description": "Technical and organizational security measures." },
+          "dpo_name": { "type": "string", "description": "Data Protection Officer name." },
+          "dpo_email": { "type": "string", "format": "email" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "custom_fields": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DataProcessingRecordCreate": {
+        "type": "object",
+        "required": ["name", "purpose", "legal_basis", "data_controller_entity_id"],
+        "properties": {
+          "name": { "type": "string" },
+          "purpose": { "type": "string" },
+          "legal_basis": { "type": "string", "enum": ["consent", "contract", "legal_obligation", "vital_interests", "public_task", "legitimate_interests"] },
+          "data_controller_entity_id": { "type": "string", "format": "uuid" },
+          "data_categories": { "type": "array", "items": { "type": "string" } },
+          "data_subject_categories": { "type": "array", "items": { "type": "string" } },
+          "recipients": { "type": "array", "items": { "type": "string" } },
+          "international_transfers": { "type": "boolean", "default": false },
+          "transfer_safeguards": { "type": "string" },
+          "retention_period": { "type": "string" },
+          "security_measures": { "type": "string" },
+          "dpo_name": { "type": "string" },
+          "dpo_email": { "type": "string", "format": "email" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "DataProcessingRecordUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "purpose": { "type": "string" },
+          "legal_basis": { "type": "string", "enum": ["consent", "contract", "legal_obligation", "vital_interests", "public_task", "legitimate_interests"] },
+          "data_controller_entity_id": { "type": "string", "format": "uuid" },
+          "data_categories": { "type": "array", "items": { "type": "string" } },
+          "data_subject_categories": { "type": "array", "items": { "type": "string" } },
+          "recipients": { "type": "array", "items": { "type": "string" } },
+          "international_transfers": { "type": "boolean" },
+          "transfer_safeguards": { "type": "string" },
+          "retention_period": { "type": "string" },
+          "security_measures": { "type": "string" },
+          "dpo_name": { "type": "string" },
+          "dpo_email": { "type": "string", "format": "email" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "custom_fields": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "DataProcessingRecordListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DataProcessingRecord" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "RiskAssessment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "in_review", "approved", "requires_action", "closed"]
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "assessment_type": {
+            "type": "string",
+            "enum": ["dpia", "risk_assessment", "vendor_assessment"],
+            "description": "Type of assessment."
+          },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "entity_name": { "type": "string" },
+          "data_processing_record_id": { "type": "string", "format": "uuid" },
+          "identified_risks": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of identified risks."
+          },
+          "mitigation_measures": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Proposed mitigation measures."
+          },
+          "assessor_id": { "type": "string", "format": "uuid" },
+          "assessor_name": { "type": "string" },
+          "assessment_date": { "type": "string", "format": "date" },
+          "review_date": { "type": "string", "format": "date" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RiskAssessmentCreate": {
+        "type": "object",
+        "required": ["title", "assessment_type"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "assessment_type": { "type": "string", "enum": ["dpia", "risk_assessment", "vendor_assessment"] },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "data_processing_record_id": { "type": "string", "format": "uuid" },
+          "identified_risks": { "type": "array", "items": { "type": "string" } },
+          "mitigation_measures": { "type": "array", "items": { "type": "string" } },
+          "assessor_id": { "type": "string", "format": "uuid" },
+          "assessment_date": { "type": "string", "format": "date" },
+          "review_date": { "type": "string", "format": "date" }
+        }
+      },
+      "RiskAssessmentListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RiskAssessment" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "PrivacyIncident": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["reported", "investigating", "contained", "resolved", "closed"]
+          },
+          "incident_date": { "type": "string", "format": "date-time" },
+          "discovery_date": { "type": "string", "format": "date-time" },
+          "notification_date": { "type": "string", "format": "date-time", "description": "Date the supervisory authority was notified." },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "entity_name": { "type": "string" },
+          "affected_data_subjects_count": { "type": "integer" },
+          "data_categories_affected": { "type": "array", "items": { "type": "string" } },
+          "root_cause": { "type": "string" },
+          "remedial_actions": { "type": "string" },
+          "reported_to_authority": { "type": "boolean" },
+          "authority_name": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" },
+          "responsible_user_name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PrivacyIncidentCreate": {
+        "type": "object",
+        "required": ["title", "severity", "incident_date", "entity_id"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "incident_date": { "type": "string", "format": "date-time" },
+          "discovery_date": { "type": "string", "format": "date-time" },
+          "entity_id": { "type": "string", "format": "uuid" },
+          "affected_data_subjects_count": { "type": "integer" },
+          "data_categories_affected": { "type": "array", "items": { "type": "string" } },
+          "root_cause": { "type": "string" },
+          "remedial_actions": { "type": "string" },
+          "responsible_user_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "PrivacyIncidentListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PrivacyIncident" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "description": "Display name." },
+          "description": { "type": "string" },
+          "file_name": { "type": "string", "description": "Original file name." },
+          "file_size": { "type": "integer", "description": "File size in bytes." },
+          "mime_type": { "type": "string", "description": "MIME type." },
+          "resource_type": {
+            "type": "string",
+            "enum": ["contract", "entity", "claim", "vendor", "ip_asset", "real_estate", "data_processing_record", "risk_assessment", "incident"],
+            "description": "Type of resource this document is attached to."
+          },
+          "resource_id": { "type": "string", "format": "uuid" },
+          "version": { "type": "integer", "description": "Document version number." },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "uploaded_by_id": { "type": "string", "format": "uuid" },
+          "uploaded_by_name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DocumentListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Document" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "display_name": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "legal_manager", "legal_user", "business_user", "read_only"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "invited", "suspended"]
+          },
+          "department": { "type": "string" },
+          "title": { "type": "string", "description": "Job title." },
+          "phone": { "type": "string" },
+          "language": { "type": "string", "description": "Preferred language (ISO 639-1)." },
+          "timezone": { "type": "string", "description": "Preferred timezone (IANA)." },
+          "last_login_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserCreate": {
+        "type": "object",
+        "required": ["email", "first_name", "last_name", "role"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "role": { "type": "string", "enum": ["admin", "legal_manager", "legal_user", "business_user", "read_only"] },
+          "department": { "type": "string" },
+          "title": { "type": "string" },
+          "phone": { "type": "string" },
+          "language": { "type": "string" },
+          "timezone": { "type": "string" }
+        }
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "role": { "type": "string", "enum": ["admin", "legal_manager", "legal_user", "business_user", "read_only"] },
+          "status": { "type": "string", "enum": ["active", "inactive", "suspended"] },
+          "department": { "type": "string" },
+          "title": { "type": "string" },
+          "phone": { "type": "string" },
+          "language": { "type": "string" },
+          "timezone": { "type": "string" }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/User" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "url": { "type": "string", "format": "uri", "description": "The URL to receive webhook notifications." },
+          "events": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of event types to subscribe to."
+          },
+          "secret": { "type": "string", "description": "Shared secret for HMAC-SHA256 signature verification." },
+          "is_active": { "type": "boolean" },
+          "description": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhookCreate": {
+        "type": "object",
+        "required": ["url", "events"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "contract.created", "contract.updated", "contract.deleted", "contract.approved", "contract.terminated", "contract.renewed", "contract.expiring",
+                "entity.created", "entity.updated", "entity.deleted",
+                "claim.created", "claim.updated", "claim.deleted", "claim.settled",
+                "vendor.created", "vendor.updated", "vendor.deleted",
+                "ip_asset.created", "ip_asset.updated", "ip_asset.deleted", "ip_asset.expiring",
+                "real_estate.created", "real_estate.updated", "real_estate.deleted",
+                "document.uploaded", "document.deleted",
+                "user.created", "user.updated", "user.deactivated",
+                "privacy_incident.created", "privacy_incident.updated"
+              ]
+            },
+            "description": "Event types to subscribe to."
+          },
+          "secret": { "type": "string", "description": "Shared secret for webhook signature verification. If not provided, one will be generated." },
+          "description": { "type": "string" }
+        }
+      },
+      "WebhookUpdate": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "events": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "is_active": { "type": "boolean" },
+          "description": { "type": "string" }
+        }
+      },
+      "WebhookListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Webhook" }
+          },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": { "type": "string" },
+          "street2": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "postal_code": { "type": "string" },
+          "country": { "type": "string", "description": "Country code (ISO 3166-1 alpha-2).", "minLength": 2, "maxLength": 2 }
+        }
+      }
+    }
+  }
+}

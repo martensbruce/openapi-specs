@@ -1,0 +1,6427 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Tableau REST API",
+    "description": "The Tableau REST API enables programmatic access to Tableau Server and Tableau Cloud resources. It provides comprehensive management of workbooks, data sources, views, users, groups, projects, permissions, schedules, subscriptions, favorites, flows, and more.\n\nCapabilities include:\n- Authentication via Personal Access Tokens (PAT), username/password, Connected Apps (JWT), or Unified Access Tokens\n- Workbook and view management - publish, download, update, refresh, and delete workbooks\n- Data source management - publish, update connections, refresh extracts, download\n- User and group administration - create, update, remove users and manage group membership\n- Project organization - create hierarchical project structures for content management\n- Granular permissions - assign and manage permissions at project, workbook, data source, and view levels\n- Scheduling - create and manage extract refresh and subscription schedules\n- Favorites and subscriptions - manage user content preferences and email subscriptions\n- Flow management - publish, run, update, and manage Prep flows\n- Server and site administration - query server info, manage sites and settings",
+    "version": "3.24",
+    "contact": {
+      "name": "Tableau Developer Program",
+      "url": "https://www.tableau.com/developer"
+    },
+    "license": {
+      "name": "Tableau Terms of Service",
+      "url": "https://www.tableau.com/tos"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{server}/api/3.24",
+      "description": "Tableau Server or Tableau Cloud instance",
+      "variables": {
+        "server": {
+          "default": "10ax.online.tableau.com",
+          "description": "Your Tableau Server hostname or Tableau Cloud pod URL (e.g., 10ax.online.tableau.com, us-east-1.online.tableau.com, or your-server.example.com)"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "tableauAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Sign in and sign out of Tableau Server or Cloud to obtain and manage authentication tokens"
+    },
+    {
+      "name": "Server",
+      "description": "Retrieve server-level information including version, build, and REST API version"
+    },
+    {
+      "name": "Sites",
+      "description": "Manage Tableau sites including creation, updates, queries, and deletion"
+    },
+    {
+      "name": "Projects",
+      "description": "Manage projects used to organize and secure content on a site"
+    },
+    {
+      "name": "Workbooks",
+      "description": "Publish, download, update, refresh, and manage workbooks and their connections"
+    },
+    {
+      "name": "Views",
+      "description": "Query views, retrieve images, PDFs, data, and manage view recommendations"
+    },
+    {
+      "name": "Data Sources",
+      "description": "Publish, update, refresh, download, and manage data sources and their connections"
+    },
+    {
+      "name": "Users",
+      "description": "Manage site users including adding, updating, removing, and querying user information"
+    },
+    {
+      "name": "Groups",
+      "description": "Manage groups and group membership for organizing users"
+    },
+    {
+      "name": "Permissions",
+      "description": "Query, add, and delete granular permissions on projects, workbooks, data sources, views, and flows"
+    },
+    {
+      "name": "Schedules",
+      "description": "Manage server schedules for extract refreshes and subscriptions (Tableau Server only)"
+    },
+    {
+      "name": "Subscriptions",
+      "description": "Manage email subscriptions to views and workbooks"
+    },
+    {
+      "name": "Favorites",
+      "description": "Manage user favorites for quick access to workbooks, views, data sources, projects, and flows"
+    },
+    {
+      "name": "Flows",
+      "description": "Publish, run, update, and manage Tableau Prep flows"
+    },
+    {
+      "name": "Jobs",
+      "description": "Monitor and manage asynchronous jobs such as extract refreshes and flow runs"
+    },
+    {
+      "name": "Tasks",
+      "description": "Manage extract refresh tasks and subscription tasks"
+    }
+  ],
+  "paths": {
+    "/auth/signin": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign In",
+        "description": "Signs in to Tableau Server or Tableau Cloud and returns an authentication token. The token must be included in the X-Tableau-Auth header of all subsequent requests. Supports authentication via username/password or Personal Access Token (PAT).",
+        "operationId": "signIn",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              },
+              "examples": {
+                "usernamePassword": {
+                  "summary": "Sign in with username and password",
+                  "value": {
+                    "credentials": {
+                      "name": "admin",
+                      "password": "secret123",
+                      "site": {
+                        "contentUrl": "mysite"
+                      }
+                    }
+                  }
+                },
+                "personalAccessToken": {
+                  "summary": "Sign in with Personal Access Token",
+                  "value": {
+                    "credentials": {
+                      "personalAccessTokenName": "my-pat-name",
+                      "personalAccessTokenSecret": "pat-secret-value",
+                      "site": {
+                        "contentUrl": "mysite"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/signout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Sign Out",
+        "description": "Signs out of Tableau Server or Tableau Cloud and invalidates the current authentication token.",
+        "operationId": "signOut",
+        "responses": {
+          "204": {
+            "description": "Successfully signed out"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/switchSite": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Switch Site",
+        "description": "Switches the authenticated user's context to a different site, returning a new authentication token for the target site.",
+        "operationId": "switchSite",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["site"],
+                "properties": {
+                  "site": {
+                    "type": "object",
+                    "required": ["contentUrl"],
+                    "properties": {
+                      "contentUrl": {
+                        "type": "string",
+                        "description": "The URL namespace of the target site"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully switched site",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/serverinfo": {
+      "get": {
+        "tags": ["Server"],
+        "summary": "Get Server Info",
+        "description": "Returns information about the Tableau Server or Tableau Cloud instance, including product version, build number, and the REST API version supported.",
+        "operationId": "getServerInfo",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerInfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites": {
+      "get": {
+        "tags": ["Sites"],
+        "summary": "Query Sites",
+        "description": "Returns a list of sites on the server that the authenticated user has access to.",
+        "operationId": "querySites",
+        "parameters": [
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sites retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Sites"],
+        "summary": "Create Site",
+        "description": "Creates a new site on the server. Only server administrators can create sites.",
+        "operationId": "createSite",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSiteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Site created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}": {
+      "get": {
+        "tags": ["Sites"],
+        "summary": "Get Site",
+        "description": "Returns information about the specified site.",
+        "operationId": "getSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          {
+            "name": "includeUsage",
+            "in": "query",
+            "description": "If true, includes storage usage information for the site",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Site information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Sites"],
+        "summary": "Update Site",
+        "description": "Updates the specified site. Only server or site administrators can update sites.",
+        "operationId": "updateSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSiteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Site updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Sites"],
+        "summary": "Delete Site",
+        "description": "Deletes the specified site. Only server administrators can delete sites.",
+        "operationId": "deleteSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Site deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Query Projects",
+        "description": "Returns a list of projects on the specified site. Projects organize workbooks, data sources, and other content.",
+        "operationId": "queryProjects",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create Project",
+        "description": "Creates a new project on the specified site. Projects can be nested by specifying a parentProjectId.",
+        "operationId": "createProject",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects/{project-id}": {
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update Project",
+        "description": "Updates the name, description, or parent project of the specified project.",
+        "operationId": "updateProject",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Project updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Delete Project",
+        "description": "Deletes the specified project. Deleting a project also deletes all content (workbooks, data sources) in the project.",
+        "operationId": "deleteProject",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Project deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks": {
+      "get": {
+        "tags": ["Workbooks"],
+        "summary": "Query Workbooks for Site",
+        "description": "Returns the workbooks on the specified site that the authenticated user has read access to.",
+        "operationId": "queryWorkbooksForSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workbooks retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbooksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Workbooks"],
+        "summary": "Publish Workbook",
+        "description": "Publishes a workbook to the specified site. The workbook can be published as a .twb or .twbx file. For files larger than 64 MB, use multipart upload.",
+        "operationId": "publishWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "description": "If true, overwrites an existing workbook with the same name",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "asJob",
+            "in": "query",
+            "description": "If true, the publish operation runs as an asynchronous job",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "skipConnectionCheck",
+            "in": "query",
+            "description": "If true, skips connection validation during publish",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishWorkbookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workbook published successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}": {
+      "get": {
+        "tags": ["Workbooks"],
+        "summary": "Get Workbook",
+        "description": "Returns information about the specified workbook, including its views, tags, and project.",
+        "operationId": "getWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workbook information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Workbooks"],
+        "summary": "Update Workbook",
+        "description": "Updates the name, project, owner, or show-tabs setting of the specified workbook.",
+        "operationId": "updateWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkbookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workbook updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Workbooks"],
+        "summary": "Delete Workbook",
+        "description": "Deletes the specified workbook from the site.",
+        "operationId": "deleteWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workbook deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/content": {
+      "get": {
+        "tags": ["Workbooks"],
+        "summary": "Download Workbook",
+        "description": "Downloads the specified workbook as a .twb or .twbx file.",
+        "operationId": "downloadWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" },
+          {
+            "name": "extractValue",
+            "in": "query",
+            "description": "If true, includes the extract in the download (for .twbx files)",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workbook downloaded successfully",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/connections": {
+      "get": {
+        "tags": ["Workbooks"],
+        "summary": "Query Workbook Connections",
+        "description": "Returns the data connections for the specified workbook.",
+        "operationId": "queryWorkbookConnections",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connections retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/connections/{connection-id}": {
+      "put": {
+        "tags": ["Workbooks"],
+        "summary": "Update Workbook Connection",
+        "description": "Updates the server address, port, username, or password for the specified workbook connection.",
+        "operationId": "updateWorkbookConnection",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" },
+          { "$ref": "#/components/parameters/connectionIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConnectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connection updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/refresh": {
+      "post": {
+        "tags": ["Workbooks"],
+        "summary": "Refresh Workbook",
+        "description": "Refreshes the extracts in the specified workbook. This is an asynchronous operation that creates a job.",
+        "operationId": "refreshWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Refresh job created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/tags": {
+      "put": {
+        "tags": ["Workbooks"],
+        "summary": "Add Tags to Workbook",
+        "description": "Adds one or more tags to the specified workbook.",
+        "operationId": "addTagsToWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/tags/{tag-name}": {
+      "delete": {
+        "tags": ["Workbooks"],
+        "summary": "Delete Tag from Workbook",
+        "description": "Deletes the specified tag from the workbook.",
+        "operationId": "deleteTagFromWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" },
+          {
+            "name": "tag-name",
+            "in": "path",
+            "required": true,
+            "description": "The name of the tag to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tag deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/users/{user-id}/workbooks": {
+      "get": {
+        "tags": ["Workbooks"],
+        "summary": "Query Workbooks for User",
+        "description": "Returns the workbooks that the specified user owns or has read access to.",
+        "operationId": "queryWorkbooksForUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workbooks retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbooksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/views": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Query Views for Site",
+        "description": "Returns all views on the specified site that the authenticated user has access to.",
+        "operationId": "queryViewsForSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/fields" },
+          {
+            "name": "includeUsageStatistics",
+            "in": "query",
+            "description": "If true, includes usage statistics for each view",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Views retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/views/{view-id}": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get View",
+        "description": "Returns information about the specified view.",
+        "operationId": "getView",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/viewIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "View information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/views/{view-id}/image": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get View Image",
+        "description": "Returns a PNG image of the specified view. You can specify filter values and resolution.",
+        "operationId": "getViewImage",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/viewIdPath" },
+          {
+            "name": "resolution",
+            "in": "query",
+            "description": "Image resolution (standard or high)",
+            "schema": {
+              "type": "string",
+              "enum": ["standard", "high"],
+              "default": "standard"
+            }
+          },
+          {
+            "name": "maxAge",
+            "in": "query",
+            "description": "Maximum age of the cached image in minutes",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "vf_<filter_name>",
+            "in": "query",
+            "description": "View filter values. Replace <filter_name> with the actual filter field name.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "View image retrieved successfully",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/views/{view-id}/pdf": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get View PDF",
+        "description": "Returns a PDF rendering of the specified view.",
+        "operationId": "getViewPdf",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/viewIdPath" },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Page type for the PDF",
+            "schema": {
+              "type": "string",
+              "enum": ["a3", "a4", "a5", "b4", "b5", "executive", "folio", "ledger", "legal", "letter", "note", "quarto", "tabloid", "unspecified"],
+              "default": "letter"
+            }
+          },
+          {
+            "name": "orientation",
+            "in": "query",
+            "description": "Page orientation for the PDF",
+            "schema": {
+              "type": "string",
+              "enum": ["portrait", "landscape"],
+              "default": "portrait"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "View PDF retrieved successfully",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/views/{view-id}/data": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get View Data",
+        "description": "Returns the underlying data of the specified view in CSV format.",
+        "operationId": "getViewData",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/viewIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "View data retrieved successfully",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/views/{view-id}/crosstab/excel": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Get View Crosstab Excel",
+        "description": "Returns a crosstab (Excel) rendering of the data in the specified view.",
+        "operationId": "getViewCrosstabExcel",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/viewIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Crosstab Excel retrieved successfully",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/views": {
+      "get": {
+        "tags": ["Views"],
+        "summary": "Query Views for Workbook",
+        "description": "Returns the views in the specified workbook.",
+        "operationId": "queryViewsForWorkbook",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" },
+          {
+            "name": "includeUsageStatistics",
+            "in": "query",
+            "description": "If true, includes usage statistics for each view",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Views retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources": {
+      "get": {
+        "tags": ["Data Sources"],
+        "summary": "Query Data Sources",
+        "description": "Returns the data sources on the specified site that the authenticated user has access to.",
+        "operationId": "queryDataSources",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data sources retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSourcesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Data Sources"],
+        "summary": "Publish Data Source",
+        "description": "Publishes a data source to the specified site. The data source file can be a .tds, .tdsx, or .hyper file. For files larger than 64 MB, use multipart upload.",
+        "operationId": "publishDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "description": "If true, overwrites an existing data source with the same name",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "append",
+            "in": "query",
+            "description": "If true, appends data to an existing data source",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "asJob",
+            "in": "query",
+            "description": "If true, the publish operation runs as an asynchronous job",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishDataSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Data source published successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}": {
+      "get": {
+        "tags": ["Data Sources"],
+        "summary": "Get Data Source",
+        "description": "Returns information about the specified data source.",
+        "operationId": "getDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data source retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSourceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Data Sources"],
+        "summary": "Update Data Source",
+        "description": "Updates the name, project, owner, or certification status of the specified data source.",
+        "operationId": "updateDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDataSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data source updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Data Sources"],
+        "summary": "Delete Data Source",
+        "description": "Deletes the specified data source from the site.",
+        "operationId": "deleteDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Data source deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/content": {
+      "get": {
+        "tags": ["Data Sources"],
+        "summary": "Download Data Source",
+        "description": "Downloads the specified data source as a .tds or .tdsx file.",
+        "operationId": "downloadDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" },
+          {
+            "name": "includeExtract",
+            "in": "query",
+            "description": "If false, excludes the extract from the download",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data source downloaded successfully",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/connections": {
+      "get": {
+        "tags": ["Data Sources"],
+        "summary": "Query Data Source Connections",
+        "description": "Returns the data connections for the specified data source.",
+        "operationId": "queryDataSourceConnections",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connections retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/connections/{connection-id}": {
+      "put": {
+        "tags": ["Data Sources"],
+        "summary": "Update Data Source Connection",
+        "description": "Updates the server address, port, username, or password for the specified data source connection.",
+        "operationId": "updateDataSourceConnection",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" },
+          { "$ref": "#/components/parameters/connectionIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConnectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connection updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/refresh": {
+      "post": {
+        "tags": ["Data Sources"],
+        "summary": "Refresh Data Source",
+        "description": "Refreshes the extract for the specified data source. This is an asynchronous operation that creates a job.",
+        "operationId": "refreshDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Refresh job created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/tags": {
+      "put": {
+        "tags": ["Data Sources"],
+        "summary": "Add Tags to Data Source",
+        "description": "Adds one or more tags to the specified data source.",
+        "operationId": "addTagsToDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/tags/{tag-name}": {
+      "delete": {
+        "tags": ["Data Sources"],
+        "summary": "Delete Tag from Data Source",
+        "description": "Deletes the specified tag from the data source.",
+        "operationId": "deleteTagFromDataSource",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" },
+          {
+            "name": "tag-name",
+            "in": "path",
+            "required": true,
+            "description": "The name of the tag to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tag deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get Users on Site",
+        "description": "Returns the users on the specified site.",
+        "operationId": "getUsersOnSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/fields" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Add User to Site",
+        "description": "Adds a user to the specified site. The user must already exist on the server (for Tableau Server) or have an identity in the identity pool (for Tableau Cloud).",
+        "operationId": "addUserToSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User added to site successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/users/{user-id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get User by ID",
+        "description": "Returns information about the specified user.",
+        "operationId": "getUserById",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update User",
+        "description": "Updates the specified user's name, email, password, or site role.",
+        "operationId": "updateUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Remove User from Site",
+        "description": "Removes the specified user from the site. Content owned by the user must be reassigned before removal.",
+        "operationId": "removeUserFromSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          {
+            "name": "mapAssetsTo",
+            "in": "query",
+            "description": "The user ID to reassign the removed user's content to",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User removed from site successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/groups": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "Query Groups",
+        "description": "Returns the groups on the specified site.",
+        "operationId": "queryGroups",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Groups retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Groups"],
+        "summary": "Create Group",
+        "description": "Creates a new group on the specified site.",
+        "operationId": "createGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Group created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/groups/{group-id}": {
+      "put": {
+        "tags": ["Groups"],
+        "summary": "Update Group",
+        "description": "Updates the name or minimum site role of the specified group.",
+        "operationId": "updateGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/groupIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Group updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Groups"],
+        "summary": "Delete Group",
+        "description": "Deletes the specified group from the site.",
+        "operationId": "deleteGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/groupIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Group deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/groups/{group-id}/users": {
+      "get": {
+        "tags": ["Groups"],
+        "summary": "Get Users in Group",
+        "description": "Returns the users in the specified group.",
+        "operationId": "getUsersInGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/groupIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users in group retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Groups"],
+        "summary": "Add User to Group",
+        "description": "Adds the specified user to the group.",
+        "operationId": "addUserToGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/groupIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["user"],
+                "properties": {
+                  "user": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "The ID of the user to add"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User added to group successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/groups/{group-id}/users/{user-id}": {
+      "delete": {
+        "tags": ["Groups"],
+        "summary": "Remove User from Group",
+        "description": "Removes the specified user from the group.",
+        "operationId": "removeUserFromGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/groupIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "User removed from group successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects/{project-id}/permissions": {
+      "get": {
+        "tags": ["Permissions"],
+        "summary": "Query Project Permissions",
+        "description": "Returns the permissions for the specified project.",
+        "operationId": "queryProjectPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Permissions"],
+        "summary": "Add Project Permissions",
+        "description": "Adds permissions for a user or group to the specified project.",
+        "operationId": "addProjectPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects/{project-id}/permissions/users/{user-id}/{capability-name}/{capability-mode}": {
+      "delete": {
+        "tags": ["Permissions"],
+        "summary": "Delete Project Permission for User",
+        "description": "Deletes a specific permission capability for a user on the specified project.",
+        "operationId": "deleteProjectPermissionForUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          { "$ref": "#/components/parameters/capabilityNamePath" },
+          { "$ref": "#/components/parameters/capabilityModePath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Permission deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects/{project-id}/permissions/groups/{group-id}/{capability-name}/{capability-mode}": {
+      "delete": {
+        "tags": ["Permissions"],
+        "summary": "Delete Project Permission for Group",
+        "description": "Deletes a specific permission capability for a group on the specified project.",
+        "operationId": "deleteProjectPermissionForGroup",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" },
+          { "$ref": "#/components/parameters/groupIdPath" },
+          { "$ref": "#/components/parameters/capabilityNamePath" },
+          { "$ref": "#/components/parameters/capabilityModePath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Permission deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/workbooks/{workbook-id}/permissions": {
+      "get": {
+        "tags": ["Permissions"],
+        "summary": "Query Workbook Permissions",
+        "description": "Returns the permissions for the specified workbook.",
+        "operationId": "queryWorkbookPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Permissions"],
+        "summary": "Add Workbook Permissions",
+        "description": "Adds permissions for a user or group to the specified workbook.",
+        "operationId": "addWorkbookPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/datasources/{datasource-id}/permissions": {
+      "get": {
+        "tags": ["Permissions"],
+        "summary": "Query Data Source Permissions",
+        "description": "Returns the permissions for the specified data source.",
+        "operationId": "queryDataSourcePermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Permissions"],
+        "summary": "Add Data Source Permissions",
+        "description": "Adds permissions for a user or group to the specified data source.",
+        "operationId": "addDataSourcePermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects/{project-id}/default-permissions/workbooks": {
+      "get": {
+        "tags": ["Permissions"],
+        "summary": "Query Default Workbook Permissions for Project",
+        "description": "Returns the default permissions for workbooks in the specified project.",
+        "operationId": "queryDefaultWorkbookPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Permissions"],
+        "summary": "Add Default Workbook Permissions for Project",
+        "description": "Sets default permissions for new workbooks created in the specified project.",
+        "operationId": "addDefaultWorkbookPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default permissions added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/projects/{project-id}/default-permissions/datasources": {
+      "get": {
+        "tags": ["Permissions"],
+        "summary": "Query Default Data Source Permissions for Project",
+        "description": "Returns the default permissions for data sources in the specified project.",
+        "operationId": "queryDefaultDataSourcePermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Permissions"],
+        "summary": "Add Default Data Source Permissions for Project",
+        "description": "Sets default permissions for new data sources created in the specified project.",
+        "operationId": "addDefaultDataSourcePermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default permissions added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/schedules": {
+      "get": {
+        "tags": ["Schedules"],
+        "summary": "Get Schedules",
+        "description": "Returns all schedules on the server. Tableau Server only.",
+        "operationId": "getSchedules",
+        "parameters": [
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedules retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Schedules"],
+        "summary": "Create Schedule",
+        "description": "Creates a new schedule for extract refreshes or subscriptions. Tableau Server only.",
+        "operationId": "createSchedule",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Schedule created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/schedules/{schedule-id}": {
+      "put": {
+        "tags": ["Schedules"],
+        "summary": "Update Schedule",
+        "description": "Updates the specified schedule. Tableau Server only.",
+        "operationId": "updateSchedule",
+        "parameters": [
+          { "$ref": "#/components/parameters/scheduleIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Schedule updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Schedules"],
+        "summary": "Delete Schedule",
+        "description": "Deletes the specified schedule. Tableau Server only.",
+        "operationId": "deleteSchedule",
+        "parameters": [
+          { "$ref": "#/components/parameters/scheduleIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Schedule deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/subscriptions": {
+      "get": {
+        "tags": ["Subscriptions"],
+        "summary": "Get Subscriptions",
+        "description": "Returns the subscriptions on the specified site.",
+        "operationId": "getSubscriptions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscriptions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Subscriptions"],
+        "summary": "Create Subscription",
+        "description": "Creates a new subscription for the specified view or workbook.",
+        "operationId": "createSubscription",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/subscriptions/{subscription-id}": {
+      "get": {
+        "tags": ["Subscriptions"],
+        "summary": "Get Subscription",
+        "description": "Returns information about the specified subscription.",
+        "operationId": "getSubscription",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/subscriptionIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Subscriptions"],
+        "summary": "Update Subscription",
+        "description": "Updates the subject, schedule, or suspend status of the specified subscription.",
+        "operationId": "updateSubscription",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/subscriptionIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Subscriptions"],
+        "summary": "Delete Subscription",
+        "description": "Deletes the specified subscription.",
+        "operationId": "deleteSubscription",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/subscriptionIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Subscription deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/favorites/{user-id}": {
+      "get": {
+        "tags": ["Favorites"],
+        "summary": "Get Favorites for User",
+        "description": "Returns the favorites for the specified user, including workbooks, views, data sources, projects, and flows.",
+        "operationId": "getFavoritesForUser",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Favorites retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoritesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Favorites"],
+        "summary": "Add to Favorites",
+        "description": "Adds a workbook, view, data source, project, or flow to the specified user's favorites.",
+        "operationId": "addToFavorites",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddFavoriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Favorite added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoritesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/favorites/{user-id}/workbooks/{workbook-id}": {
+      "delete": {
+        "tags": ["Favorites"],
+        "summary": "Delete Workbook from Favorites",
+        "description": "Removes the specified workbook from the user's favorites.",
+        "operationId": "deleteWorkbookFromFavorites",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          { "$ref": "#/components/parameters/workbookIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workbook removed from favorites"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/favorites/{user-id}/views/{view-id}": {
+      "delete": {
+        "tags": ["Favorites"],
+        "summary": "Delete View from Favorites",
+        "description": "Removes the specified view from the user's favorites.",
+        "operationId": "deleteViewFromFavorites",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          { "$ref": "#/components/parameters/viewIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "View removed from favorites"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/favorites/{user-id}/datasources/{datasource-id}": {
+      "delete": {
+        "tags": ["Favorites"],
+        "summary": "Delete Data Source from Favorites",
+        "description": "Removes the specified data source from the user's favorites.",
+        "operationId": "deleteDataSourceFromFavorites",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          { "$ref": "#/components/parameters/datasourceIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Data source removed from favorites"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/favorites/{user-id}/projects/{project-id}": {
+      "delete": {
+        "tags": ["Favorites"],
+        "summary": "Delete Project from Favorites",
+        "description": "Removes the specified project from the user's favorites.",
+        "operationId": "deleteProjectFromFavorites",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/userIdPath" },
+          { "$ref": "#/components/parameters/projectIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Project removed from favorites"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/flows": {
+      "get": {
+        "tags": ["Flows"],
+        "summary": "Query Flows for Site",
+        "description": "Returns the flows on the specified site that the authenticated user has access to.",
+        "operationId": "queryFlowsForSite",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" },
+          { "$ref": "#/components/parameters/sort" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flows retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Flows"],
+        "summary": "Publish Flow",
+        "description": "Publishes a Tableau Prep flow to the specified site.",
+        "operationId": "publishFlow",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "description": "If true, overwrites an existing flow with the same name",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishFlowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Flow published successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/flows/{flow-id}": {
+      "get": {
+        "tags": ["Flows"],
+        "summary": "Get Flow",
+        "description": "Returns information about the specified flow.",
+        "operationId": "getFlow",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flow information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Flows"],
+        "summary": "Update Flow",
+        "description": "Updates the name, project, or owner of the specified flow.",
+        "operationId": "updateFlow",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Flow updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Flows"],
+        "summary": "Delete Flow",
+        "description": "Deletes the specified flow from the site.",
+        "operationId": "deleteFlow",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Flow deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/flows/{flow-id}/connections": {
+      "get": {
+        "tags": ["Flows"],
+        "summary": "Query Flow Connections",
+        "description": "Returns the data connections for the specified flow.",
+        "operationId": "queryFlowConnections",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flow connections retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/flows/{flow-id}/run": {
+      "post": {
+        "tags": ["Flows"],
+        "summary": "Run Flow Now",
+        "description": "Runs the specified flow immediately. Returns a job that can be used to track the run status.",
+        "operationId": "runFlowNow",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "responses": {
+          "202": {
+            "description": "Flow run job created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/flows/{flow-id}/content": {
+      "get": {
+        "tags": ["Flows"],
+        "summary": "Download Flow",
+        "description": "Downloads the specified flow as a .tfl or .tflx file.",
+        "operationId": "downloadFlow",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flow downloaded successfully",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/flows/{flow-id}/permissions": {
+      "get": {
+        "tags": ["Permissions"],
+        "summary": "Query Flow Permissions",
+        "description": "Returns the permissions for the specified flow.",
+        "operationId": "queryFlowPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Permissions"],
+        "summary": "Add Flow Permissions",
+        "description": "Adds permissions for a user or group to the specified flow.",
+        "operationId": "addFlowPermissions",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/flowIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/jobs": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Query Jobs",
+        "description": "Returns the asynchronous jobs on the specified site. Jobs are created for extract refreshes, workbook/data source publishing, and flow runs.",
+        "operationId": "queryJobs",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" },
+          { "$ref": "#/components/parameters/filter" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jobs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/jobs/{job-id}": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Get Job",
+        "description": "Returns status information about the specified job.",
+        "operationId": "getJob",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/jobIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Jobs"],
+        "summary": "Cancel Job",
+        "description": "Cancels the specified job if it is still in progress.",
+        "operationId": "cancelJob",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/jobIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job cancelled successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/tasks/extractRefreshes": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Get Extract Refresh Tasks",
+        "description": "Returns the extract refresh tasks on the specified site.",
+        "operationId": "getExtractRefreshTasks",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/pageSize" },
+          { "$ref": "#/components/parameters/pageNumber" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extract refresh tasks retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractRefreshTasksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/tasks/extractRefreshes/{task-id}": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Get Extract Refresh Task",
+        "description": "Returns information about the specified extract refresh task.",
+        "operationId": "getExtractRefreshTask",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/taskIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extract refresh task retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractRefreshTaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Tasks"],
+        "summary": "Delete Extract Refresh Task",
+        "description": "Deletes the specified extract refresh task.",
+        "operationId": "deleteExtractRefreshTask",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/taskIdPath" }
+        ],
+        "responses": {
+          "204": {
+            "description": "Extract refresh task deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sites/{site-id}/tasks/extractRefreshes/{task-id}/runNow": {
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Run Extract Refresh Task",
+        "description": "Runs the specified extract refresh task immediately.",
+        "operationId": "runExtractRefreshTask",
+        "parameters": [
+          { "$ref": "#/components/parameters/siteIdPath" },
+          { "$ref": "#/components/parameters/taskIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extract refresh task started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "tableauAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Tableau-Auth",
+        "description": "Tableau authentication token obtained from the Sign In endpoint (POST /auth/signin). This token must be included in all subsequent API requests. Tokens are short-lived and expire after a period of inactivity. To obtain a token, sign in with either username/password or a Personal Access Token (PAT)."
+      },
+      "personalAccessToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Tableau-Auth",
+        "description": "Authentication using a Personal Access Token (PAT). PATs are long-lived tokens created in Tableau Server or Cloud user settings. To authenticate, include the PAT name and secret in the Sign In request body, then use the returned session token in the X-Tableau-Auth header. PATs are recommended for automated scripts and CI/CD pipelines. They expire after 15 consecutive days of non-use and can be individually revoked without affecting the user account."
+      },
+      "connectedAppJwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT-based authentication for Tableau Connected Apps. Connected Apps enable trusted authentication between Tableau and external applications without requiring user credentials. Create a Connected App in Tableau Server or Cloud settings to obtain a client ID and generate a secret. Use these to create a JWT with scopes like tableau:views:embed, tableau:content:read, etc. The JWT is passed directly as a Bearer token. Supported scopes include: tableau:content:read, tableau:workbooks:create, tableau:datasources:create, tableau:tasks:run, tableau:users:create, tableau:groups:create, tableau:projects:create, tableau:workbooks:download, tableau:datasources:download."
+      }
+    },
+    "parameters": {
+      "siteIdPath": {
+        "name": "site-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the site. Obtained from the Sign In response or Query Sites.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "workbookIdPath": {
+        "name": "workbook-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the workbook",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "viewIdPath": {
+        "name": "view-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the view",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "datasourceIdPath": {
+        "name": "datasource-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the data source",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "userIdPath": {
+        "name": "user-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the user",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "groupIdPath": {
+        "name": "group-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the group",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "projectIdPath": {
+        "name": "project-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the project",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "connectionIdPath": {
+        "name": "connection-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the connection",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "scheduleIdPath": {
+        "name": "schedule-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the schedule",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "subscriptionIdPath": {
+        "name": "subscription-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the subscription",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "flowIdPath": {
+        "name": "flow-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the flow",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "jobIdPath": {
+        "name": "job-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the job",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "taskIdPath": {
+        "name": "task-id",
+        "in": "path",
+        "required": true,
+        "description": "The LUID of the task",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "capabilityNamePath": {
+        "name": "capability-name",
+        "in": "path",
+        "required": true,
+        "description": "The name of the capability (e.g., Read, Write, ChangePermissions, Delete, Filter, ViewComments, AddComment, ExportData, ViewUnderlyingData, ExportImage, ShareView, WebAuthoring, RunExplainData, CreateRefreshMetrics)",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "capabilityModePath": {
+        "name": "capability-mode",
+        "in": "path",
+        "required": true,
+        "description": "The mode of the capability: Allow or Deny",
+        "schema": {
+          "type": "string",
+          "enum": ["Allow", "Deny"]
+        }
+      },
+      "pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "description": "The number of items to return per page (max 1000, default 100)",
+        "schema": {
+          "type": "integer",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "pageNumber": {
+        "name": "pageNumber",
+        "in": "query",
+        "description": "The page number to return (1-indexed)",
+        "schema": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        }
+      },
+      "filter": {
+        "name": "filter",
+        "in": "query",
+        "description": "Filter expression to limit results. Format: field:operator:value. Multiple filters joined with commas. Operators: eq, in, gt, gte, lt, lte, has. Example: name:eq:MyWorkbook,ownerName:eq:admin",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "sort": {
+        "name": "sort",
+        "in": "query",
+        "description": "Sort expression. Format: field:direction. Multiple sorts joined with commas. Direction: asc or desc. Example: name:asc,createdAt:desc",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "fields": {
+        "name": "fields",
+        "in": "query",
+        "description": "Comma-separated list of fields to include in the response. Use _default_ for default fields, or specify individual field names.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "400 - Bad request. The request body is malformed, missing required fields, or contains invalid values.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "401 - Unauthorized. The authentication token is missing, invalid, or expired. Sign in again to obtain a new token.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "403 - Forbidden. The authenticated user does not have the required permissions for this operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "404 - Not found. The specified resource does not exist or the user does not have access to it.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "409 - Conflict. A resource with the same name or identifier already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "summary": {
+                "type": "string",
+                "description": "A short summary of the error"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error message"
+              },
+              "code": {
+                "type": "string",
+                "description": "Tableau error code"
+              }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Number of items per page"
+          },
+          "totalAvailable": {
+            "type": "integer",
+            "description": "Total number of items available"
+          }
+        }
+      },
+      "SignInRequest": {
+        "type": "object",
+        "required": ["credentials"],
+        "properties": {
+          "credentials": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Username for sign-in (use with password)"
+              },
+              "password": {
+                "type": "string",
+                "format": "password",
+                "description": "Password for sign-in (use with name)"
+              },
+              "personalAccessTokenName": {
+                "type": "string",
+                "description": "Name of the Personal Access Token (use with personalAccessTokenSecret)"
+              },
+              "personalAccessTokenSecret": {
+                "type": "string",
+                "format": "password",
+                "description": "Secret value of the Personal Access Token"
+              },
+              "site": {
+                "type": "object",
+                "required": ["contentUrl"],
+                "properties": {
+                  "contentUrl": {
+                    "type": "string",
+                    "description": "The URL namespace of the site to sign in to. Use empty string for the default site."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SignInResponse": {
+        "type": "object",
+        "properties": {
+          "credentials": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "The authentication token to use in subsequent requests via the X-Tableau-Auth header"
+              },
+              "estimatedTimeToExpiration": {
+                "type": "string",
+                "description": "Estimated time until the token expires"
+              },
+              "site": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The LUID of the site"
+                  },
+                  "contentUrl": {
+                    "type": "string",
+                    "description": "The URL namespace of the site"
+                  }
+                }
+              },
+              "user": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The LUID of the authenticated user"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ServerInfoResponse": {
+        "type": "object",
+        "properties": {
+          "serverInfo": {
+            "type": "object",
+            "properties": {
+              "productVersion": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Tableau Server product version"
+                  },
+                  "build": {
+                    "type": "string",
+                    "description": "Build number"
+                  }
+                }
+              },
+              "prepConductorVersion": {
+                "type": "string",
+                "description": "Prep Conductor version"
+              },
+              "restApiVersion": {
+                "type": "string",
+                "description": "REST API version supported by this server"
+              }
+            }
+          }
+        }
+      },
+      "Site": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "contentUrl": {
+            "type": "string"
+          },
+          "adminMode": {
+            "type": "string",
+            "enum": ["ContentOnly", "ContentAndUsers"]
+          },
+          "userQuota": {
+            "type": "integer"
+          },
+          "storageQuota": {
+            "type": "integer",
+            "description": "Storage quota in MB"
+          },
+          "tierCreatorCapacity": {
+            "type": "integer"
+          },
+          "tierExplorerCapacity": {
+            "type": "integer"
+          },
+          "tierViewerCapacity": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["Active", "Suspended"]
+          },
+          "disableSubscriptions": {
+            "type": "boolean"
+          },
+          "revisionHistoryEnabled": {
+            "type": "boolean"
+          },
+          "revisionLimit": {
+            "type": "integer"
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "numUsers": {
+                "type": "integer"
+              },
+              "storage": {
+                "type": "integer",
+                "description": "Storage used in bytes"
+              }
+            }
+          }
+        }
+      },
+      "SitesResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "sites": {
+            "type": "object",
+            "properties": {
+              "site": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Site"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SiteResponse": {
+        "type": "object",
+        "properties": {
+          "site": {
+            "$ref": "#/components/schemas/Site"
+          }
+        }
+      },
+      "CreateSiteRequest": {
+        "type": "object",
+        "required": ["site"],
+        "properties": {
+          "site": {
+            "type": "object",
+            "required": ["name", "contentUrl"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name of the site"
+              },
+              "contentUrl": {
+                "type": "string",
+                "description": "URL namespace of the site (used in URLs)"
+              },
+              "adminMode": {
+                "type": "string",
+                "enum": ["ContentOnly", "ContentAndUsers"]
+              },
+              "userQuota": {
+                "type": "integer",
+                "description": "Maximum number of users for the site"
+              },
+              "storageQuota": {
+                "type": "integer",
+                "description": "Storage quota in MB"
+              },
+              "disableSubscriptions": {
+                "type": "boolean"
+              },
+              "revisionHistoryEnabled": {
+                "type": "boolean"
+              },
+              "revisionLimit": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "UpdateSiteRequest": {
+        "type": "object",
+        "required": ["site"],
+        "properties": {
+          "site": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "contentUrl": {
+                "type": "string"
+              },
+              "adminMode": {
+                "type": "string",
+                "enum": ["ContentOnly", "ContentAndUsers"]
+              },
+              "userQuota": {
+                "type": "integer"
+              },
+              "state": {
+                "type": "string",
+                "enum": ["Active", "Suspended"]
+              },
+              "storageQuota": {
+                "type": "integer"
+              },
+              "disableSubscriptions": {
+                "type": "boolean"
+              },
+              "revisionHistoryEnabled": {
+                "type": "boolean"
+              },
+              "revisionLimit": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contentPermissions": {
+            "type": "string",
+            "enum": ["LockedToProject", "ManagedByOwner", "LockedToProjectWithoutNested"],
+            "description": "How permissions are managed for content in this project"
+          },
+          "parentProjectId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "LUID of the parent project (null for top-level projects)"
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "topLevelProject": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProjectsResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "projects": {
+            "type": "object",
+            "properties": {
+              "project": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProjectResponse": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/Project"
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "required": ["project"],
+        "properties": {
+          "project": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "contentPermissions": {
+                "type": "string",
+                "enum": ["LockedToProject", "ManagedByOwner", "LockedToProjectWithoutNested"]
+              },
+              "parentProjectId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        }
+      },
+      "UpdateProjectRequest": {
+        "type": "object",
+        "required": ["project"],
+        "properties": {
+          "project": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "contentPermissions": {
+                "type": "string",
+                "enum": ["LockedToProject", "ManagedByOwner", "LockedToProjectWithoutNested"]
+              },
+              "parentProjectId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        }
+      },
+      "Workbook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "contentUrl": {
+            "type": "string"
+          },
+          "webpageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "showTabs": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Size of the workbook in bytes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "encryptExtracts": {
+            "type": "string"
+          },
+          "defaultViewId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "tags": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "views": {
+            "type": "object",
+            "properties": {
+              "view": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WorkbooksResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "workbooks": {
+            "type": "object",
+            "properties": {
+              "workbook": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Workbook"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WorkbookResponse": {
+        "type": "object",
+        "properties": {
+          "workbook": {
+            "$ref": "#/components/schemas/Workbook"
+          }
+        }
+      },
+      "PublishWorkbookRequest": {
+        "type": "object",
+        "properties": {
+          "workbook": {
+            "type": "object",
+            "required": ["name", "project"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the workbook"
+              },
+              "description": {
+                "type": "string"
+              },
+              "project": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "showTabs": {
+                "type": "boolean"
+              },
+              "connections": {
+                "type": "object",
+                "properties": {
+                  "connection": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ConnectionCredentials"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateWorkbookRequest": {
+        "type": "object",
+        "required": ["workbook"],
+        "properties": {
+          "workbook": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "showTabs": {
+                "type": "boolean"
+              },
+              "recentlyViewed": {
+                "type": "boolean"
+              },
+              "project": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "owner": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "View": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "contentUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "viewUrlName": {
+            "type": "string"
+          },
+          "workbook": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "tags": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "totalViewCount": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "ViewsResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "views": {
+            "type": "object",
+            "properties": {
+              "view": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ViewResponse": {
+        "type": "object",
+        "properties": {
+          "view": {
+            "$ref": "#/components/schemas/View"
+          }
+        }
+      },
+      "DataSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "contentUrl": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of the data source (e.g., live, extract)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isCertified": {
+            "type": "boolean"
+          },
+          "certificationNote": {
+            "type": "string"
+          },
+          "useRemoteQueryAgent": {
+            "type": "boolean"
+          },
+          "encryptExtracts": {
+            "type": "string"
+          },
+          "hasExtracts": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "tags": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          }
+        }
+      },
+      "DataSourcesResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "datasources": {
+            "type": "object",
+            "properties": {
+              "datasource": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DataSource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "DataSourceResponse": {
+        "type": "object",
+        "properties": {
+          "datasource": {
+            "$ref": "#/components/schemas/DataSource"
+          }
+        }
+      },
+      "PublishDataSourceRequest": {
+        "type": "object",
+        "properties": {
+          "datasource": {
+            "type": "object",
+            "required": ["name", "project"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the data source"
+              },
+              "description": {
+                "type": "string"
+              },
+              "project": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "connections": {
+                "type": "object",
+                "properties": {
+                  "connection": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ConnectionCredentials"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateDataSourceRequest": {
+        "type": "object",
+        "required": ["datasource"],
+        "properties": {
+          "datasource": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "isCertified": {
+                "type": "boolean"
+              },
+              "certificationNote": {
+                "type": "string"
+              },
+              "project": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "owner": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Connection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "description": "Connection type (e.g., sqlserver, postgres, mysql, snowflake, bigquery)"
+          },
+          "serverAddress": {
+            "type": "string"
+          },
+          "serverPort": {
+            "type": "integer"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "datasource": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ConnectionCredentials": {
+        "type": "object",
+        "properties": {
+          "serverAddress": {
+            "type": "string"
+          },
+          "serverPort": {
+            "type": "integer"
+          },
+          "credentials": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Username for the connection"
+              },
+              "password": {
+                "type": "string",
+                "format": "password",
+                "description": "Password for the connection"
+              },
+              "embed": {
+                "type": "boolean",
+                "description": "If true, embeds credentials in the data source"
+              },
+              "oAuth": {
+                "type": "boolean",
+                "description": "If true, uses OAuth for the connection"
+              }
+            }
+          }
+        }
+      },
+      "ConnectionsResponse": {
+        "type": "object",
+        "properties": {
+          "connections": {
+            "type": "object",
+            "properties": {
+              "connection": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ConnectionResponse": {
+        "type": "object",
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/Connection"
+          }
+        }
+      },
+      "UpdateConnectionRequest": {
+        "type": "object",
+        "required": ["connection"],
+        "properties": {
+          "connection": {
+            "type": "object",
+            "properties": {
+              "serverAddress": {
+                "type": "string"
+              },
+              "serverPort": {
+                "type": "integer"
+              },
+              "userName": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string",
+                "format": "password"
+              },
+              "embedPassword": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "siteRole": {
+            "type": "string",
+            "enum": ["Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorCreator", "SiteAdministratorExplorer", "ServerAdministrator", "Viewer", "Unlicensed"],
+            "description": "The user's role on the site"
+          },
+          "authSetting": {
+            "type": "string",
+            "description": "Authentication type for the user"
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "externalAuthUserId": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          }
+        }
+      },
+      "UsersResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "users": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "AddUserRequest": {
+        "type": "object",
+        "required": ["user"],
+        "properties": {
+          "user": {
+            "type": "object",
+            "required": ["name", "siteRole"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Username of the user to add"
+              },
+              "siteRole": {
+                "type": "string",
+                "enum": ["Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorCreator", "SiteAdministratorExplorer", "Viewer", "Unlicensed"]
+              },
+              "authSetting": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "required": ["user"],
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "password": {
+                "type": "string",
+                "format": "password"
+              },
+              "siteRole": {
+                "type": "string",
+                "enum": ["Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorCreator", "SiteAdministratorExplorer", "Viewer", "Unlicensed"]
+              },
+              "authSetting": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "domainName": {
+            "type": "string"
+          },
+          "minimumSiteRole": {
+            "type": "string",
+            "enum": ["Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorCreator", "SiteAdministratorExplorer", "Viewer", "Unlicensed"]
+          },
+          "import": {
+            "type": "object",
+            "properties": {
+              "domainName": {
+                "type": "string"
+              },
+              "siteRole": {
+                "type": "string"
+              },
+              "grantLicenseMode": {
+                "type": "string",
+                "enum": ["onLogin", "onSync"]
+              }
+            }
+          },
+          "userCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "GroupsResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "groups": {
+            "type": "object",
+            "properties": {
+              "group": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GroupResponse": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "$ref": "#/components/schemas/Group"
+          }
+        }
+      },
+      "CreateGroupRequest": {
+        "type": "object",
+        "required": ["group"],
+        "properties": {
+          "group": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "minimumSiteRole": {
+                "type": "string",
+                "enum": ["Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorCreator", "SiteAdministratorExplorer", "Viewer", "Unlicensed"]
+              }
+            }
+          }
+        }
+      },
+      "UpdateGroupRequest": {
+        "type": "object",
+        "required": ["group"],
+        "properties": {
+          "group": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "minimumSiteRole": {
+                "type": "string",
+                "enum": ["Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorCreator", "SiteAdministratorExplorer", "Viewer", "Unlicensed"]
+              }
+            }
+          }
+        }
+      },
+      "PermissionsResponse": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "parent": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              },
+              "granteeCapabilities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GranteeCapability"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GranteeCapability": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "group": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "capabilities": {
+            "type": "object",
+            "properties": {
+              "capability": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Capability name (e.g., Read, Write, ChangePermissions, Delete, Filter, ViewComments, AddComment, ExportData, ViewUnderlyingData, ExportImage, ShareView, WebAuthoring)"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": ["Allow", "Deny"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AddPermissionsRequest": {
+        "type": "object",
+        "required": ["permissions"],
+        "properties": {
+          "permissions": {
+            "type": "object",
+            "required": ["granteeCapabilities"],
+            "properties": {
+              "granteeCapabilities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GranteeCapability"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "TagsRequest": {
+        "type": "object",
+        "required": ["tags"],
+        "properties": {
+          "tags": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TagsResponse": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["Active", "Suspended"]
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["Extract", "Subscription", "Flow"]
+          },
+          "frequency": {
+            "type": "string",
+            "enum": ["Hourly", "Daily", "Weekly", "Monthly"]
+          },
+          "nextRunAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endScheduleAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "executionOrder": {
+            "type": "string",
+            "enum": ["Parallel", "Serial"]
+          },
+          "frequencyDetails": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "description": "Start time in HH:MM:SS format"
+              },
+              "end": {
+                "type": "string",
+                "description": "End time in HH:MM:SS format"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "interval": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "hours": {
+                          "type": "string"
+                        },
+                        "minutes": {
+                          "type": "string"
+                        },
+                        "weekDay": {
+                          "type": "string",
+                          "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                        },
+                        "monthDay": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SchedulesResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "schedules": {
+            "type": "object",
+            "properties": {
+              "schedule": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Schedule"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ScheduleResponse": {
+        "type": "object",
+        "properties": {
+          "schedule": {
+            "$ref": "#/components/schemas/Schedule"
+          }
+        }
+      },
+      "CreateScheduleRequest": {
+        "type": "object",
+        "required": ["schedule"],
+        "properties": {
+          "schedule": {
+            "type": "object",
+            "required": ["name", "type", "frequency", "frequencyDetails"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "type": {
+                "type": "string",
+                "enum": ["Extract", "Subscription", "Flow"]
+              },
+              "frequency": {
+                "type": "string",
+                "enum": ["Hourly", "Daily", "Weekly", "Monthly"]
+              },
+              "executionOrder": {
+                "type": "string",
+                "enum": ["Parallel", "Serial"]
+              },
+              "frequencyDetails": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string"
+                  },
+                  "end": {
+                    "type": "string"
+                  },
+                  "intervals": {
+                    "type": "object",
+                    "properties": {
+                      "interval": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "hours": {
+                              "type": "string"
+                            },
+                            "minutes": {
+                              "type": "string"
+                            },
+                            "weekDay": {
+                              "type": "string"
+                            },
+                            "monthDay": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateScheduleRequest": {
+        "type": "object",
+        "required": ["schedule"],
+        "properties": {
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "integer"
+              },
+              "frequency": {
+                "type": "string",
+                "enum": ["Hourly", "Daily", "Weekly", "Monthly"]
+              },
+              "state": {
+                "type": "string",
+                "enum": ["Active", "Suspended"]
+              },
+              "executionOrder": {
+                "type": "string",
+                "enum": ["Parallel", "Serial"]
+              },
+              "frequencyDetails": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string"
+                  },
+                  "end": {
+                    "type": "string"
+                  },
+                  "intervals": {
+                    "type": "object",
+                    "properties": {
+                      "interval": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "hours": {
+                              "type": "string"
+                            },
+                            "minutes": {
+                              "type": "string"
+                            },
+                            "weekDay": {
+                              "type": "string"
+                            },
+                            "monthDay": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "attachImage": {
+            "type": "boolean"
+          },
+          "attachPdf": {
+            "type": "boolean"
+          },
+          "pageOrientation": {
+            "type": "string",
+            "enum": ["Portrait", "Landscape"]
+          },
+          "pageSizeOption": {
+            "type": "string",
+            "enum": ["A3", "A4", "A5", "B4", "B5", "Executive", "Folio", "Ledger", "Legal", "Letter", "Note", "Quarto", "Tabloid", "Unspecified"]
+          },
+          "suspended": {
+            "type": "boolean"
+          },
+          "content": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["Workbook", "View"]
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "SubscriptionsResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "subscriptions": {
+            "type": "object",
+            "properties": {
+              "subscription": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SubscriptionResponse": {
+        "type": "object",
+        "properties": {
+          "subscription": {
+            "$ref": "#/components/schemas/Subscription"
+          }
+        }
+      },
+      "CreateSubscriptionRequest": {
+        "type": "object",
+        "required": ["subscription"],
+        "properties": {
+          "subscription": {
+            "type": "object",
+            "required": ["subject", "content", "schedule", "user"],
+            "properties": {
+              "subject": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "attachImage": {
+                "type": "boolean"
+              },
+              "attachPdf": {
+                "type": "boolean"
+              },
+              "pageOrientation": {
+                "type": "string",
+                "enum": ["Portrait", "Landscape"]
+              },
+              "pageSizeOption": {
+                "type": "string",
+                "enum": ["A3", "A4", "A5", "B4", "B5", "Executive", "Folio", "Ledger", "Legal", "Letter", "Note", "Quarto", "Tabloid", "Unspecified"]
+              },
+              "content": {
+                "type": "object",
+                "required": ["id", "type"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["Workbook", "View"]
+                  }
+                }
+              },
+              "schedule": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "user": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateSubscriptionRequest": {
+        "type": "object",
+        "required": ["subscription"],
+        "properties": {
+          "subscription": {
+            "type": "object",
+            "properties": {
+              "subject": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "attachImage": {
+                "type": "boolean"
+              },
+              "attachPdf": {
+                "type": "boolean"
+              },
+              "suspended": {
+                "type": "boolean"
+              },
+              "schedule": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "FavoritesResponse": {
+        "type": "object",
+        "properties": {
+          "favorites": {
+            "type": "object",
+            "properties": {
+              "favorite": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Favorite"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Favorite": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "parentProjectName": {
+            "type": "string"
+          },
+          "workbook": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "view": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "datasource": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "flow": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "AddFavoriteRequest": {
+        "type": "object",
+        "required": ["favorite"],
+        "properties": {
+          "favorite": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Display label for the favorite"
+              },
+              "workbook": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "view": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "datasource": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "project": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "flow": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Flow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "webpageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "fileType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "tags": {
+            "type": "object",
+            "properties": {
+              "tag": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          }
+        }
+      },
+      "FlowsResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "flows": {
+            "type": "object",
+            "properties": {
+              "flow": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Flow"
+                }
+              }
+            }
+          }
+        }
+      },
+      "FlowResponse": {
+        "type": "object",
+        "properties": {
+          "flow": {
+            "$ref": "#/components/schemas/Flow"
+          }
+        }
+      },
+      "PublishFlowRequest": {
+        "type": "object",
+        "properties": {
+          "flow": {
+            "type": "object",
+            "required": ["name", "project"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the flow"
+              },
+              "description": {
+                "type": "string"
+              },
+              "project": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "connections": {
+                "type": "object",
+                "properties": {
+                  "connection": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ConnectionCredentials"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateFlowRequest": {
+        "type": "object",
+        "required": ["flow"],
+        "properties": {
+          "flow": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "project": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "owner": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Job": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mode": {
+            "type": "string",
+            "description": "Job mode (e.g., Asynchronous)"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of job (e.g., RefreshExtract, PublishWorkbook, RunFlow)"
+          },
+          "progress": {
+            "type": "integer",
+            "description": "Job progress percentage (0-100)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishCode": {
+            "type": "integer",
+            "description": "0 = success, 1 = failed, 2 = cancelled"
+          },
+          "statusNotes": {
+            "type": "object",
+            "properties": {
+              "statusNote": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "extractRefreshJob": {
+            "type": "object",
+            "properties": {
+              "datasource": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "workbook": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "JobsResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "backgroundJobs": {
+            "type": "object",
+            "properties": {
+              "backgroundJob": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      },
+      "JobResponse": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          }
+        }
+      },
+      "ExtractRefreshTask": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["FullRefresh", "IncrementalRefresh"]
+          },
+          "priority": {
+            "type": "integer"
+          },
+          "consecutiveFailedCount": {
+            "type": "integer"
+          },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "frequency": {
+                "type": "string"
+              },
+              "nextRunAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "datasource": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "workbook": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ExtractRefreshTasksResponse": {
+        "type": "object",
+        "properties": {
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "tasks": {
+            "type": "object",
+            "properties": {
+              "task": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "extractRefresh": {
+                      "$ref": "#/components/schemas/ExtractRefreshTask"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ExtractRefreshTaskResponse": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "object",
+            "properties": {
+              "extractRefresh": {
+                "$ref": "#/components/schemas/ExtractRefreshTask"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

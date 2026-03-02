@@ -1,0 +1,1534 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Chattermill API",
+    "description": "The Chattermill API is a REST API that allows you to programmatically add, update, query, and delete customer feedback responses. It provides access to projects, data sources, data types, themes, categories, metrics, custom segments, and AI-powered insights.\n\nKey capabilities include:\n- Fetching and filtering feedback responses by date range, data source, and data type\n- Adding new feedback responses from external sources\n- Searching responses by attributes (e.g. email, customer ID) for GDPR data erasure\n- Querying AI-generated themes and sentiment analysis\n- Accessing project metrics such as NPS, CSAT, and custom formulas\n- Working with custom segments for granular data analysis\n\nTo get started, obtain an API key from the Settings page in your Chattermill account at https://app.chattermill.com/settings/api.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Chattermill API Support",
+      "email": "api@chattermill.io",
+      "url": "https://apidocs.chattermill.com/"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://chattermill.com/terms"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.chattermill.com/v1",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerApiKey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Projects",
+      "description": "Query available projects. Use the project key to scope requests to other endpoints."
+    },
+    {
+      "name": "Responses",
+      "description": "Add, query, search, and delete feedback responses."
+    },
+    {
+      "name": "Data Sources",
+      "description": "Access integrated data sources such as Zendesk, Typeform, Intercom, and others."
+    },
+    {
+      "name": "Data Types",
+      "description": "Query available data types like NPS, CSAT, reviews, and survey responses."
+    },
+    {
+      "name": "Themes",
+      "description": "Access AI-generated themes applied to processed feedback responses."
+    },
+    {
+      "name": "Categories",
+      "description": "Work with response categories for organizing and classifying feedback."
+    },
+    {
+      "name": "Custom Segments",
+      "description": "Access custom segments for granular data filtering and analysis."
+    },
+    {
+      "name": "Metrics",
+      "description": "Query aggregated metrics such as NPS, CSAT, and custom metric formulas."
+    },
+    {
+      "name": "Insights",
+      "description": "Access AI-powered insights derived from feedback analysis. This feature is currently in beta."
+    }
+  ],
+  "paths": {
+    "/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List projects",
+        "description": "Retrieves a list of all projects accessible with the current API key. Each project includes a unique key that is used to scope requests to other endpoints.",
+        "tags": ["Projects"],
+        "responses": {
+          "200": {
+            "description": "A list of projects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Project"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/projects/{project_key}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get a project",
+        "description": "Retrieves details of a specific project by its key.",
+        "tags": ["Projects"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ProjectKeyPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Project"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/responses": {
+      "get": {
+        "operationId": "listResponses",
+        "summary": "List responses",
+        "description": "Retrieves a paginated list of feedback responses. Use query parameters to filter by project, date range, data source, data type, and to paginate through results using cursor-based pagination with `after_id`.",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": true,
+            "description": "The project key to scope the responses query. Obtain this from the `/projects` endpoint.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "description": "Start of the date range filter (ISO 8601 format, e.g. `2024-01-01T00:00:00Z`).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "description": "End of the date range filter (ISO 8601 format, e.g. `2024-01-31T23:59:59Z`).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "data_source",
+            "in": "query",
+            "required": false,
+            "description": "Filter responses by data source key (e.g. `zendesk`, `typeform`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "data_type",
+            "in": "query",
+            "required": false,
+            "description": "Filter responses by data type key (e.g. `nps`, `review`, `csat`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after_id",
+            "in": "query",
+            "required": false,
+            "description": "Cursor-based pagination. Provide the last response `id` from the previous page to fetch the next set of results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Number of responses to return per page.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of responses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Response"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResponse",
+        "summary": "Create a response",
+        "description": "Adds a new feedback response to a project. Before creating a response, query `/projects`, `/data_sources`, and `/data_types` to obtain the required keys. If the needed data source or data type does not exist, contact Chattermill Support to have it created.",
+        "tags": ["Responses"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The response was created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Response"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/responses/search": {
+      "post": {
+        "operationId": "searchResponses",
+        "summary": "Search responses",
+        "description": "Searches for responses by any response attribute such as email, customer ID, or other metadata fields. Commonly used to find responses for GDPR data erasure requests.",
+        "tags": ["Responses"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A list of matching responses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Response"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/responses/{response_id}": {
+      "get": {
+        "operationId": "getResponse",
+        "summary": "Get a response",
+        "description": "Retrieves a single feedback response by its ID.",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResponseIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The response details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Response"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateResponse",
+        "summary": "Update a response",
+        "description": "Updates an existing feedback response. Only the fields provided in the request body will be updated.",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResponseIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The response was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Response"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteResponse",
+        "summary": "Delete a response",
+        "description": "Permanently deletes a feedback response. This action is irreversible and is typically used for GDPR data erasure requests. Use the `/responses/search` endpoint first to locate the response by attribute.",
+        "tags": ["Responses"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResponseIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The response was deleted successfully."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/data_sources": {
+      "get": {
+        "operationId": "listDataSources",
+        "summary": "List data sources",
+        "description": "Retrieves a list of all available data sources for the authenticated account. Data sources represent external integrations such as Zendesk, Typeform, Intercom, Trustpilot, and others.",
+        "tags": ["Data Sources"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": false,
+            "description": "Filter data sources by project key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of data sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DataSource"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/data_types": {
+      "get": {
+        "operationId": "listDataTypes",
+        "summary": "List data types",
+        "description": "Retrieves a list of all available data types. Data types classify the kind of feedback, such as NPS surveys, CSAT surveys, reviews, or free-text feedback.",
+        "tags": ["Data Types"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": false,
+            "description": "Filter data types by project key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of data types.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DataType"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/themes": {
+      "get": {
+        "operationId": "listThemes",
+        "summary": "List themes",
+        "description": "Retrieves a list of AI-generated themes. Themes are classification labels automatically applied to feedback responses after processing, each associated with a sentiment (positive, negative, or neutral).",
+        "tags": ["Themes"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": true,
+            "description": "The project key to scope the themes query.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of themes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Theme"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "summary": "List categories",
+        "description": "Retrieves a list of categories used to organize and classify feedback themes hierarchically within a project.",
+        "tags": ["Categories"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": true,
+            "description": "The project key to scope the categories query.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Category"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/custom_segments": {
+      "get": {
+        "operationId": "listCustomSegments",
+        "summary": "List custom segments",
+        "description": "Retrieves a list of custom segments defined for a project. Custom segments allow granular filtering and grouping of feedback data based on user-defined criteria.",
+        "tags": ["Custom Segments"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": true,
+            "description": "The project key to scope the custom segments query.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of custom segments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomSegment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "listMetrics",
+        "summary": "List metrics",
+        "description": "Retrieves aggregated metrics for a project, such as NPS, CSAT, overall sentiment scores, and custom metrics. Supports filtering by date range and segment.",
+        "tags": ["Metrics"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": true,
+            "description": "The project key to scope the metrics query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "description": "Start of the date range filter (ISO 8601 format).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "description": "End of the date range filter (ISO 8601 format).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "required": false,
+            "description": "Filter metrics by a custom segment key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated metric values for the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Metric"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/insights": {
+      "get": {
+        "operationId": "listInsights",
+        "summary": "List insights (beta)",
+        "description": "Retrieves AI-powered insights derived from feedback analysis. Insights surface notable trends, anomalies, and actionable observations across your feedback data. This endpoint is currently in beta.",
+        "tags": ["Insights"],
+        "parameters": [
+          {
+            "name": "project_key",
+            "in": "query",
+            "required": true,
+            "description": "The project key to scope the insights query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "description": "Start of the date range filter (ISO 8601 format).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "description": "End of the date range filter (ISO 8601 format).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of insights.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Insight"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerApiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API Key authentication. Obtain your API key from the Settings page in your Chattermill account at https://app.chattermill.com/settings/api. Provide it as a Bearer token in the Authorization header: `Authorization: Bearer {api_key}`."
+      },
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authentication for partner and third-party integrations. Used by the Chattermill Partner API for delegated access to Chattermill resources on behalf of users.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://app.chattermill.com/oauth/authorize",
+            "tokenUrl": "https://app.chattermill.com/oauth/token",
+            "refreshUrl": "https://app.chattermill.com/oauth/token",
+            "scopes": {
+              "read:projects": "Read access to projects",
+              "read:responses": "Read access to feedback responses",
+              "write:responses": "Create and update feedback responses",
+              "delete:responses": "Delete feedback responses",
+              "read:data_sources": "Read access to data sources",
+              "read:data_types": "Read access to data types",
+              "read:themes": "Read access to themes",
+              "read:categories": "Read access to categories",
+              "read:custom_segments": "Read access to custom segments",
+              "read:metrics": "Read access to metrics",
+              "read:insights": "Read access to insights"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "ProjectKeyPath": {
+        "name": "project_key",
+        "in": "path",
+        "required": true,
+        "description": "The unique key identifying a project. Typically a lowercase, hyphenated version of your company or project name.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ResponseIdPath": {
+        "name": "response_id",
+        "in": "path",
+        "required": true,
+        "description": "The unique identifier of a feedback response.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the project."
+          },
+          "key": {
+            "type": "string",
+            "description": "Unique key for referencing the project in API requests."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the project."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional description of the project."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the project was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the project was last updated."
+          }
+        },
+        "required": ["id", "key", "name"]
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the response."
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "The text content of the customer feedback."
+          },
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numerical rating or score provided by the customer (e.g. NPS score 0-10, CSAT score 1-5)."
+          },
+          "user_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "External identifier of the user who submitted the feedback."
+          },
+          "data_source": {
+            "$ref": "#/components/schemas/DataSourceRef"
+          },
+          "data_type": {
+            "$ref": "#/components/schemas/DataTypeRef"
+          },
+          "project_key": {
+            "type": "string",
+            "description": "Key of the project this response belongs to."
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Arbitrary key-value metadata associated with the response (e.g. customer email, location, product)."
+          },
+          "themes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ThemeAssignment"
+            },
+            "description": "AI-generated themes assigned to this response after processing."
+          },
+          "sentiment": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["positive", "negative", "neutral", "mixed"],
+            "description": "Overall sentiment detected in the feedback."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the original feedback was submitted."
+          },
+          "processed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when the response was processed by Chattermill's AI engine."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the response was last updated."
+          }
+        },
+        "required": ["id", "project_key", "created_at"]
+      },
+      "ResponseCreate": {
+        "type": "object",
+        "properties": {
+          "project_key": {
+            "type": "string",
+            "description": "The project key to add the response to."
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "The text content of the customer feedback."
+          },
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numerical rating or score provided by the customer."
+          },
+          "user_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "External identifier of the user who submitted the feedback."
+          },
+          "data_source_key": {
+            "type": "string",
+            "description": "Key of the data source (obtain from `/data_sources`)."
+          },
+          "data_type_key": {
+            "type": "string",
+            "description": "Key of the data type (obtain from `/data_types`)."
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Arbitrary key-value metadata to associate with the response."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the original feedback was submitted. Defaults to the current time if not provided."
+          }
+        },
+        "required": ["project_key", "data_source_key", "data_type_key"]
+      },
+      "ResponseUpdate": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated text content of the customer feedback."
+          },
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "description": "Updated numerical rating or score."
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Updated metadata. Merges with existing metadata."
+          }
+        }
+      },
+      "ResponseSearchRequest": {
+        "type": "object",
+        "properties": {
+          "project_key": {
+            "type": "string",
+            "description": "The project key to search within."
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Key-value pairs to match against response fields and metadata (e.g. `{\"email\": \"user@example.com\"}` or `{\"user_id\": \"12345\"}`)."
+          }
+        },
+        "required": ["project_key", "attributes"]
+      },
+      "DataSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the data source."
+          },
+          "key": {
+            "type": "string",
+            "description": "Unique key for referencing the data source in API requests."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the data source."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional description of the data source."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the data source was created."
+          }
+        },
+        "required": ["id", "key", "name"]
+      },
+      "DataSourceRef": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Data source key."
+          },
+          "name": {
+            "type": "string",
+            "description": "Data source display name."
+          }
+        }
+      },
+      "DataType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the data type."
+          },
+          "key": {
+            "type": "string",
+            "description": "Unique key for referencing the data type in API requests."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the data type."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional description of the data type."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the data type was created."
+          }
+        },
+        "required": ["id", "key", "name"]
+      },
+      "DataTypeRef": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Data type key."
+          },
+          "name": {
+            "type": "string",
+            "description": "Data type display name."
+          }
+        }
+      },
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the theme."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the theme."
+          },
+          "sentiment": {
+            "type": "string",
+            "enum": ["positive", "negative", "neutral"],
+            "description": "Default sentiment classification associated with this theme."
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategoryRef"
+          },
+          "response_count": {
+            "type": "integer",
+            "description": "Number of responses tagged with this theme."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the theme was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the theme was last updated."
+          }
+        },
+        "required": ["id", "name", "sentiment"]
+      },
+      "ThemeAssignment": {
+        "type": "object",
+        "description": "A theme assignment on a specific response, including the sentiment detected for that response.",
+        "properties": {
+          "theme_id": {
+            "type": "string",
+            "description": "Identifier of the assigned theme."
+          },
+          "theme_name": {
+            "type": "string",
+            "description": "Display name of the assigned theme."
+          },
+          "sentiment": {
+            "type": "string",
+            "enum": ["positive", "negative", "neutral"],
+            "description": "Sentiment detected for this theme in the context of the response."
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the category."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the category."
+          },
+          "parent_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Identifier of the parent category, if this is a subcategory."
+          },
+          "theme_count": {
+            "type": "integer",
+            "description": "Number of themes grouped under this category."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the category was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the category was last updated."
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "CategoryRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Category identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Category display name."
+          }
+        }
+      },
+      "CustomSegment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the custom segment."
+          },
+          "key": {
+            "type": "string",
+            "description": "Unique key for referencing the custom segment."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the custom segment."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional description of the custom segment."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Available values for this segment."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the custom segment was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the custom segment was last updated."
+          }
+        },
+        "required": ["id", "key", "name"]
+      },
+      "Metric": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the metric."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the metric (e.g. NPS, CSAT, Sentiment Score)."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["nps", "csat", "sentiment", "custom"],
+            "description": "The type of metric."
+          },
+          "value": {
+            "type": "number",
+            "description": "The computed metric value."
+          },
+          "total_responses": {
+            "type": "integer",
+            "description": "Total number of responses used to compute this metric."
+          },
+          "date_from": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Start of the date range used for computation."
+          },
+          "date_to": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "End of the date range used for computation."
+          }
+        },
+        "required": ["id", "name", "type", "value"]
+      },
+      "Insight": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the insight."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short title summarizing the insight."
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the insight and its implications."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["trend", "anomaly", "opportunity", "risk"],
+            "description": "Classification of the insight type."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Severity or importance level of the insight."
+          },
+          "related_themes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryRef"
+            },
+            "description": "Themes related to this insight."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the insight was generated."
+          }
+        },
+        "required": ["id", "title", "description", "type"]
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of records matching the query."
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "Number of records returned per page."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether there are more pages available."
+          },
+          "last_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ID of the last record in the current page. Use as the `after_id` parameter to fetch the next page."
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code."
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message."
+              },
+              "details": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "The field that caused the error."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Specific error message for the field."
+                    }
+                  }
+                },
+                "description": "Additional details about validation errors."
+              }
+            },
+            "required": ["code", "message"]
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request was malformed or contained invalid parameters.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication failed. The API key is missing, invalid, or expired.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "The request body was well-formed but contained semantic errors.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests. You have exceeded the rate limit.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "An unexpected server error occurred.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
