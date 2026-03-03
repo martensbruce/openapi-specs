@@ -1291,10 +1291,10 @@
     "securitySchemes": {
       "tiktok_oauth": {
         "type": "oauth2",
-        "description": "OAuth 2.0 authorization code flow for TikTok Business Accounts.\n\nIMPORTANT: TikTok uses non-standard OAuth2 parameter names:\n- Authorization request: use `client_key` instead of the standard `client_id`\n- Token exchange: use `app_id` instead of `client_id`, and `secret` instead of `client_secret`\n- Access token delivery: passed via the `Access-Token` header (not the standard `Authorization: Bearer` header)\n\nAccess tokens are valid for 24 hours; refresh tokens are valid for 1 year.",
+        "description": "OAuth 2.0 authorization code flow for TikTok Business Accounts.\n\nIMPORTANT: TikTok uses non-standard OAuth2 parameter names:\n- Authorization request: use `app_id` instead of the standard `client_id`\n- Token exchange: use `app_id` instead of `client_id`, and `secret` instead of `client_secret`\n- Access token delivery: passed via the `Access-Token` header (not the standard `Authorization: Bearer` header)\n\nAccess tokens are valid for 24 hours; refresh tokens are valid for 1 year.",
         "flows": {
           "authorizationCode": {
-            "authorizationUrl": "https://www.tiktok.com/v2/auth/authorize/",
+            "authorizationUrl": "https://business-api.tiktok.com/portal/auth",
             "tokenUrl": "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
             "refreshUrl": "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/",
             "scopes": {
@@ -1311,7 +1311,7 @@
             }
           }
         },
-        "x-client-id-name": "client_key",
+        "x-client-id-name": "app_id",
         "x-token-request-client-id-name": "app_id",
         "x-token-request-client-secret-name": "secret",
         "x-access-token-header": "Access-Token"
