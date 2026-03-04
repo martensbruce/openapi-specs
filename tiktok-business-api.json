@@ -55,6 +55,53 @@
     }
   ],
   "paths": {
+    "/tt_user/token_info/get/": {
+      "get": {
+        "operationId": "getTokenInfo",
+        "summary": "Get authenticated user info from access token",
+        "description": "Returns the business_id, scopes, and creator_id associated with the current access token. Use this to discover the business_id needed for other API calls.",
+        "tags": ["Account"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response with token info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/BaseResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "business_id": {
+                              "type": "string",
+                              "description": "The business account ID associated with this token."
+                            },
+                            "creator_id": {
+                              "type": "string",
+                              "description": "The creator ID associated with this token."
+                            },
+                            "scopes": {
+                              "type": "array",
+                              "items": { "type": "string" },
+                              "description": "List of permission scopes granted to this token."
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
     "/business/get/": {
       "get": {
         "operationId": "getBusinessAccount",
