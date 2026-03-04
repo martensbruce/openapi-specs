@@ -56,12 +56,32 @@
   ],
   "paths": {
     "/tt_user/token_info/get/": {
-      "get": {
+      "post": {
         "operationId": "getTokenInfo",
         "summary": "Get authenticated user info from access token",
-        "description": "Returns the business_id, scopes, and creator_id associated with the current access token. Use this to discover the business_id needed for other API calls.",
+        "description": "Returns the app_id, scopes, and creator_id associated with the current access token. Use the returned creator_id as the business_id parameter in other API calls.",
         "tags": ["Account"],
-        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["app_id", "access_token"],
+                "properties": {
+                  "app_id": {
+                    "type": "string",
+                    "description": "ID of your developer app. Find it in My Apps > App Detail > Basic Information."
+                  },
+                  "access_token": {
+                    "type": "string",
+                    "description": "The access token obtained from the OAuth flow."
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response with token info",
@@ -76,18 +96,17 @@
                         "data": {
                           "type": "object",
                           "properties": {
-                            "business_id": {
+                            "app_id": {
                               "type": "string",
-                              "description": "The business account ID associated with this token."
+                              "description": "ID of the developer application."
                             },
                             "creator_id": {
                               "type": "string",
-                              "description": "The creator ID associated with this token."
+                              "description": "Application-specific unique ID of the TikTok account. Use this value as the business_id parameter in Accounts API requests."
                             },
-                            "scopes": {
-                              "type": "array",
-                              "items": { "type": "string" },
-                              "description": "List of permission scopes granted to this token."
+                            "scope": {
+                              "type": "string",
+                              "description": "Comma-separated list of permission scopes granted to this token."
                             }
                           }
                         }
