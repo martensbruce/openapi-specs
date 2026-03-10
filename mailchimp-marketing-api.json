@@ -16,8 +16,8 @@
   },
   "servers": [
     {
-      "url": "https://us1.api.mailchimp.com/3.0",
-      "description": "Mailchimp Marketing API, by default it uses the US1 region"
+      "url": "https://us7.api.mailchimp.com/3.0",
+      "description": "Mailchimp Marketing API, by default it uses the US7 region"
     }
   ],
   "security": [
