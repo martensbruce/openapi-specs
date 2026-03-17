@@ -48467,9 +48467,18 @@
     },
     "components": {
         "securitySchemes": {
-            "sec0": {
+            "oauth2": {
                 "type": "oauth2",
-                "flows": {}
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://app.apicbase.com/oauth/authorize/",
+                        "tokenUrl": "https://api.apicbase.com/oauth/token/",
+                        "scopes": {
+                            "accounts": "Access account information",
+                            "library": "Access library data"
+                        }
+                    }
+                }
             }
         }
     },
