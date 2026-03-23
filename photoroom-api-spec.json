@@ -1,0 +1,1732 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Photoroom API",
+    "description": "Photoroom image editing and background removal API. Includes the Image Editing v2 endpoints (Plus plan), the Remove Background endpoint (Basic plan), and the Account Details endpoint.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://image-api.photoroom.com",
+      "description": "Production server (Plus plan) — Image Editing v2 and Account endpoints"
+    },
+    {
+      "url": "https://sdk.photoroom.com",
+      "description": "Production server (Basic plan) — Remove Background endpoint"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "paths": {
+    "/v2/edit": {
+      "get": {
+        "operationId": "edit-image-get",
+        "summary": "Image Editing v2 — GET (Plus plan)",
+        "description": "This endpoint processes an image and applies one or more edits: background removal, AI-generated backgrounds (background.prompt), realistic shadows (shadow.mode), relighting (lighting.mode), text removal (textRemoval.mode), background blur (background.blur.*), subject outline (outline.*), AI beautification (beautify.mode), AI expand (expand.mode), AI uncrop (uncrop.mode), AI upscale (upscale.mode), and positioning/resizing (padding, margin, outputSize).\n\nParameters are grouped by feature using dot notation: background.* for backgrounds, shadow.* for shadows, lighting.* for relighting, outline.* for subject outlines, beautify.* for AI beautification, expand.* for AI expand, uncrop.* for AI uncrop, upscale.* for AI upscale, export.* for output format, and segmentation.* for text-guided segmentation.\n\nEdits can be combined in a single call.\n\nIt accepts a URL input for the image. If you want to directly upload an image file, please use the POST endpoint. For more details on the difference between the GET and POST endpoints, please have a look at our documentation: https://docs.photoroom.com/image-editing-api/which-endpoints-are-available.\n\nFor the simplest integration (recommended for no-code tools like Lovable), use this GET endpoint with imageUrl — no file upload handling required.\n\nExample of a request: GET https://image-api.photoroom.com/v2/edit?imageUrl=https://example.com/photo.jpg&removeBackground=true&background.color=FFFFFF&outputSize=1000x1000&padding=0.1 with header x-api-key: YOUR_API_KEY\n\nThe response is the edited image as binary data (image/png by default). To change format, set export.format to jpeg or webp.\n\nFull documentation: https://docs.photoroom.com/image-editing-api-plus-plan/quickstart-guide\n\nFeature documentation:\n- HD Background Removal: https://docs.photoroom.com/image-editing-api-plus-plan/hd-background-removal\n- Positioning (padding, margin, scaling): https://docs.photoroom.com/image-editing-api-plus-plan/positioning\n- Output Size: https://docs.photoroom.com/image-editing-api-plus-plan/output-size\n- Static Background: https://docs.photoroom.com/image-editing-api-plus-plan/static-background\n- Background Blur: https://docs.photoroom.com/image-editing-api-plus-plan/background-blur\n- Subject Outline: https://docs.photoroom.com/image-editing-api-plus-plan/subject-outline\n- AI Shadows: https://docs.photoroom.com/image-editing-api-plus-plan/ai-shadows\n- AI Backgrounds: https://docs.photoroom.com/image-editing-api-plus-plan/ai-backgrounds\n- AI Relight: https://docs.photoroom.com/image-editing-api-plus-plan/ai-relight\n- AI Text Removal: https://docs.photoroom.com/image-editing-api-plus-plan/ai-text-removal\n- AI Expand: https://docs.photoroom.com/image-editing-api-plus-plan/ai-expand\n- AI Uncrop: https://docs.photoroom.com/image-editing-api-plus-plan/ai-uncrop\n- AI Beautifier: https://docs.photoroom.com/image-editing-api-plus-plan/ai-beautifier\n- AI Upscale: https://docs.photoroom.com/image-editing-api-plus-plan/alpha-ai-upscale\n- Describe Any Change: https://docs.photoroom.com/image-editing-api-plus-plan/edit-with-ai\n- Create Any Image: https://docs.photoroom.com/image-editing-api-plus-plan/alpha-create-any-image\n- Text-Guided Segmentation: https://docs.photoroom.com/image-editing-api-plus-plan/alpha-text-guided-segmentation\n- Sandbox Mode (free testing): https://docs.photoroom.com/image-editing-api-plus-plan/sandbox-mode",
+        "servers": [
+          {
+            "url": "https://image-api.photoroom.com",
+            "description": "Production server (Plus plan)"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "imageUrl",
+            "in": "query",
+            "description": "URL of the main image used by the API. The GET endpoint accepts `imageUrl` only.\n\nThe maximum size of the image is 30MB.\n\nIf you want to directly upload an image file, please instead use the POST endpoint with the argument `imageFile`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "removeBackground",
+            "in": "query",
+            "description": "If enabled (default), the background of the image will be removed using PhotoRoom's award-winning algorithm",
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "background.color",
+            "in": "query",
+            "description": "Color of the background. If omitted, background will be transparent unless `background.imageUrl` or `background.imageFile` is provided. Can be a hex color without the hash sign (example: `FF0000`, `FF0000EE`) or color name (examples: `red`, `blue`)\n\nWhen `removeBackground` is set to `false`, the color will be used to fill padding areas created by `outputSize` and any transparent areas in the original image.",
+            "schema": {
+              "default": "transparent",
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.imageUrl",
+            "in": "query",
+            "description": "URL of the image to use as a background.\n\nCan't be provided if `removeBackground` is set to `false`\n\nThe maximum size of the image is 30MB.\n\nIf `background.imageUrl` is provided, neither `background.imageFile` nor `background.prompt` can be provided, and vice versa.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.prompt",
+            "in": "query",
+            "description": "Prompt to use for guiding the background generation process.\n\nTips for writing high-quality prompts are available [in our documentation](https://docs.photoroom.com/image-editing-api-plus-plan/ai-backgrounds#how-to-write-a-high-quality-prompt).\n\nIf `background.prompt` is provided, neither `background.imageUrl` nor `background.imageFile` can be provided, and vice versa.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.negativePrompt",
+            "in": "query",
+            "description": "(LEGACY) This parameter will only have an effect when using the previous AI Backgrounds model, which is used when setting the header: `pr-ai-background-model-version: 2`\n\nA negative prompt to use for guiding the background generation process; If provided, the generation algorithm will try to avoid properties listed in the negativePrompt.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.expandPrompt",
+            "in": "query",
+            "description": "If `ai.auto`, a pre-processing step is applied to expand the prompt into a longer form.\n\n`auto` and `never` are legacy values that will be removed in the next major version.",
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "auto",
+                  "type": "string"
+                },
+                {
+                  "const": "never",
+                  "type": "string"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "description": "If `ai.auto`, a pre-processing step is applied to expand the prompt into a longer form.\n\nExample: original prompt `\"on a beach\"`, expanded prompt: `\"An object rests on the sandy shore of a tranquil beach. The object, partially covered in sand, casts a soft shadow under the warm sunlight. Seashells and driftwood are scattered around, with gentle waves lapping at the shore in the background, creating a serene coastal scene.\"`\n\n(Note: `background.expandPrompt.mode` only affects `background.prompt`)",
+                      "enum": ["ai.auto", "ai.never"],
+                      "type": "string"
+                    }
+                  },
+                  "required": ["mode"],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "background.seed",
+            "in": "query",
+            "description": "Seed used to generate the background. Can be used to get similar looking results for the same prompt.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "background.scaling",
+            "in": "query",
+            "description": "Whether the background should fit or fill (default) the output image. If set to `fit`, the empty pixels will be transparent.\n\nCan only be provided if `background.imageUrl` or `background.imageFile` is provided.",
+            "schema": {
+              "default": "fill",
+              "enum": ["fit", "fill"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.guidance.imageUrl",
+            "in": "query",
+            "description": "URL of the image to use as a background image guidance.\n\nCan't be provided if `removeBackground` is set to `false`\n\nThe maximum size of the image is 30MB.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.guidance.imageFile",
+            "in": "query",
+            "description": "Bytes of the image to use as a background image guidance. Only available in the POST request.\n\nCan't be provided if `removeBackground` is set to `false`\n\nThe maximum size of the image is 30MB.",
+            "schema": {
+              "format": "binary",
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.guidance.scale",
+            "in": "query",
+            "description": "How closely the generated background will be matching the guiding image, between 0 and 1.\n\nA value of 1 means it will match the guiding image as much as possible, a value of 0 means the guiding image will be ignored.\n\n(Only working when using the [new model](https://docs.photoroom.com/image-editing-api-plus-plan/ai-backgrounds#important-model-selection))",
+            "schema": {
+              "default": 0.6,
+              "maximum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "background.blur.mode",
+            "in": "query",
+            "description": "Type of blur to apply to the background.\n- `gaussian`: Applies a gaussian blur to the background.\n- `bokeh`: Applies a bokeh blur to the background.",
+            "schema": {
+              "enum": ["gaussian", "bokeh"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "background.blur.radius",
+            "in": "query",
+            "description": "Radius of the blur effect. Higher values mean the result will be blurrier.\n\nMinimum: 0, Maximum: 0.05",
+            "schema": {
+              "default": 0.01,
+              "exclusiveMinimum": 0,
+              "maximum": 0.05,
+              "type": "number"
+            }
+          },
+          {
+            "name": "shadow.mode",
+            "in": "query",
+            "description": "Shadow generation mode to use on the main image used by the API. If set to `ai.soft`, a soft shadow will be generated. If set to `ai.hard`, a hard shadow will be generated. If set to `ai.floating`, a floating shadow will be generated.",
+            "schema": {
+              "enum": ["ai.soft", "ai.hard", "ai.floating"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "lighting.mode",
+            "in": "query",
+            "description": "Lighting mode to use on the main image used by the API.\n\nIf set to `ai.auto`, the lighting will be automatically adjusted.\n\nIf set to `ai.preserve-hue-and-saturation`, the lighting will be adjusted while keeping color hues and saturations as close as possible to the original image.",
+            "schema": {
+              "enum": ["ai.auto", "ai.preserve-hue-and-saturation"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "textRemoval.mode",
+            "in": "query",
+            "description": "Text removal mode to use on the main image used by the API.\n\nIf set to `ai.artificial`, artificial text will be automatically removed. Artificial text includes all text added on an image through post-processing, such as company name, watermarks, discount, etc.\n\nIf set to `ai.natural`, natural text will be automatically removed. Natural text includes text that naturally occurs in an image such as writing on buildings or clothings, road signs, etc.\n\nIf set to `ai.all`, all text (natural and artificial) will be automatically removed.",
+            "schema": {
+              "enum": ["ai.artificial", "ai.natural", "ai.all"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "outline.color",
+            "in": "query",
+            "description": "Apply a colored outline around the subject to highlight it. Can be a hex color without the hash sign (example: `FF0000`, `FF0000EE`) or color name (examples: `red`, `blue`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outline.width",
+            "in": "query",
+            "description": "Width of the outline relative to the image size. Suggested values:\n- 0.01-0.02: Subtle/thin outline\n- 0.03-0.05: Standard/medium outline (default: 0.03)\n- 0.06-0.1: Bold/thick outline\nThe value represents a ratio where 0.1 (10%) is the maximum thickness.\n\nMinimum: 0, Maximum: 0.1",
+            "schema": {
+              "default": 0.03,
+              "maximum": 0.1,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "outline.blurRadius",
+            "in": "query",
+            "description": "Blur radius for the outline, creating a glow or soft edge effect. Higher values mean the outline will be more blurred, 0 means no blur.\n\nMinimum: 0, Maximum: 0.025",
+            "schema": {
+              "default": 0,
+              "maximum": 0.025,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "beautify.mode",
+            "in": "query",
+            "description": "If enabled, the input image will be beautified (imageFile or imageUrl).\n\nThis is intended to enhance product images by automatically improving the aesthetics of the image, such as the lighting, background, and overall appearance.\n\nIf set to `ai.auto`, the input image will be beautified to match the aesthetic of a packshot product image.\n\nIf set to `ai.food`, the input image will be beautified in a way that's specific to food images, such as placing the subject on a plate.\n\nIf set to `ai.car`, the input image will be beautified in a way that's specific to car images, such as removing reflections.\n\nImportant:\n- the beautifier will not preserve the original background: we recommend using this option along with `removeBackground` set to `true`\n- the beautifier is meant for images of products, food, or cars; we do not recommend using it with subjects such as humans, pets, etc.",
+            "schema": {
+              "enum": ["ai.auto", "ai.food", "ai.car"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "beautify.seed",
+            "in": "query",
+            "description": "Seed used to run the subject beautifier. Can be used to get similar looking results for the same subject.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "expand.mode",
+            "in": "query",
+            "description": "Expand mode to use on the main image used by the API.\n\nIf set to `ai.auto`, all transparent pixels will automatically be filled based on the content of the current background (either the original background, if `removeBackground` has been set to `false`, or a static background, if `background.imageUrl` has been provided).\n\nExpand will rely on output size, subject position, and fitting mode.",
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand.seed",
+            "in": "query",
+            "description": "Seed used to generate the background. Can be used to get similar looking results for the same prompt.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "uncrop.mode",
+            "in": "query",
+            "description": "Uncrop mode to use on the main image used by the API.\n\nCurrently, only `ai.auto` is supported. With `ai.auto`, the subject will be automatically detected and uncropped.",
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "uncrop.seed",
+            "in": "query",
+            "description": "Seed used to generate the background. Can be used to get similar looking results for the same prompt.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "upscale.mode",
+            "in": "query",
+            "description": "(ALPHA) Warning: might get deprecated with a 2 weeks warning.\n\nIf enabled, the input image will be upscaled (imageFile or imageUrl).\n\nThe input image must not exceed 1000x1000 pixels in dimensions when using `ai.fast` mode. The input image must not exceed 512x512 pixels in dimensions when using `ai.slow` mode.\n\nThe upscaling process will enlarge the input image up to 4 times its original size.\n\nai.fast: Optimized for speed, may not produce the highest quality results.\nai.slow: Optimized for quality, may take more time to process.",
+            "schema": {
+              "enum": ["ai.fast", "ai.slow"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "editWithAI.mode",
+            "in": "query",
+            "description": "Edit with AI mode to use on the main image used by the API.\n\nCurrently, only `ai.auto` is supported.",
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "editWithAI.prompt",
+            "in": "query",
+            "description": "The natural language prompt describing the change to apply to the image.",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "editWithAI.seed",
+            "in": "query",
+            "description": "Seed used for the generation. Can be used to get similar looking results for the same prompt.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "describeAnyChange.mode",
+            "in": "query",
+            "description": "(DEPRECATED) Use `editWithAI.mode` instead.\n\nDescribe any change mode to use on the main image used by the API.\n\nCurrently, only `ai.auto` is supported.",
+            "deprecated": true,
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "describeAnyChange.prompt",
+            "in": "query",
+            "description": "(DEPRECATED) Use `editWithAI.prompt` instead.\n\nThe natural language prompt describing the change to apply to the image.",
+            "deprecated": true,
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "describeAnyChange.seed",
+            "in": "query",
+            "description": "(DEPRECATED) Use `editWithAI.seed` instead.\n\nSeed used for the generation. Can be used to get similar looking results for the same prompt.",
+            "deprecated": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "imageFromPrompt.prompt",
+            "in": "query",
+            "description": "The prompt to use for generating the image.",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageFromPrompt.seed",
+            "in": "query",
+            "description": "Seed used to run the AI image generator. Can be used to get similar looking results for the same prompt.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "imageFromPrompt.size",
+            "in": "query",
+            "description": "Supported sizes for AI image generation.",
+            "schema": {
+              "enum": ["LANDSCAPE_16_9", "LANDSCAPE_4_3", "PORTRAIT_16_9", "PORTRAIT_4_3", "SQUARE_HD"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "segmentation.mode",
+            "in": "query",
+            "description": "Controls whether or not the salient object should be kept or ignored by the segmentation model.",
+            "schema": {
+              "enum": ["keepSalientObject", "ignoreSalientObject"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "segmentation.prompt",
+            "in": "query",
+            "description": "A textual description of what the segmentation should keep.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "segmentation.negativePrompt",
+            "in": "query",
+            "description": "A textual description of what the segmentation should remove.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "export.format",
+            "in": "query",
+            "description": "The format of the result image.\n\nDefault value is \"png\".\n\nJpeg exports with a quality of 80 and WebP exports with a quality of 90.",
+            "schema": {
+              "default": "png",
+              "enum": ["png", "jpeg", "jpg", "webp"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "export.dpi",
+            "in": "query",
+            "description": "The pixel density of the result image.\n\nPixel density can be set to any value between 72 and 1200 dpi.",
+            "schema": {
+              "maximum": 1200,
+              "minimum": 72,
+              "type": "number"
+            }
+          },
+          {
+            "name": "outputSize",
+            "in": "query",
+            "description": "Output size of the image. In the form of either:\n- `auto` to keep the template dimensions when templateId is defined, or behave like `originalImage` when templateId isn't defined (default)\n- `widthxheight` for a custom size (example: `200x400`)\n- `originalImage` to keep the original image dimensions\n- `croppedSubject` to use the size of the foreground dimensions after cropping around it",
+            "schema": {
+              "default": "auto",
+              "pattern": "^(auto|\\d+x\\d+|originalImage|croppedSubject)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "padding",
+            "in": "query",
+            "description": "General padding around the subject. Can be expressed as a number between 0 and 0.49, a percentage string between 0% and 49% (e.g., \"30%\"), or a pixel value string (e.g., \"100px\"). Unlike `margin`, padding will be ignored on cropped sides of the subject if that option is enabled. Expressed in a ratio of the size of the document, minus margins (similar to CSS).\n\nTips: https://docs.photoroom.com/image-editing-api-plus-plan/positioning",
+            "schema": {
+              "default": 0,
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "paddingTop",
+            "in": "query",
+            "description": "Top padding, overrides general padding on the top side. Accepts the same formats as `padding`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "paddingBottom",
+            "in": "query",
+            "description": "Bottom padding, overrides general padding on the bottom side. Accepts the same formats as `padding`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "paddingLeft",
+            "in": "query",
+            "description": "Left padding, overrides general padding on the left side. Accepts the same formats as `padding`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "paddingRight",
+            "in": "query",
+            "description": "Right padding, overrides general padding on the right side. Accepts the same formats as `padding`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "margin",
+            "in": "query",
+            "description": "General margin around the subject. Can be expressed as a number between 0 and 0.49, a percentage string between 0% and 49% (e.g., \"30%\"), or a pixel value string (e.g., \"100px\"). Unlike `padding`, margin is never ignored even on cropped sides of the subject. Expressed in a ratio of the output image size.\n\nTips: https://docs.photoroom.com/image-editing-api-plus-plan/positioning",
+            "schema": {
+              "default": 0,
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "marginTop",
+            "in": "query",
+            "description": "Top Margin, overrides general margin on the top side. Accepts the same formats as `margin`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "marginBottom",
+            "in": "query",
+            "description": "Bottom Margin, overrides general margin on the bottom side. Accepts the same formats as `margin`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "marginLeft",
+            "in": "query",
+            "description": "Left Margin, overrides general margin on the left side. Accepts the same formats as `margin`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "marginRight",
+            "in": "query",
+            "description": "Right Margin, overrides general margin on the right side. Accepts the same formats as `margin`.",
+            "schema": {
+              "type": ["number", "string"]
+            }
+          },
+          {
+            "name": "scaling",
+            "in": "query",
+            "description": "Whether the subject should fit (default) or fill the output image. If set to `fit`, the empty pixels will be transparent.\n\nCan only be provided if `imageUrl` or `imageFile` is provided.",
+            "schema": {
+              "default": "fit",
+              "enum": ["fit", "fill"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "maxWidth",
+            "in": "query",
+            "description": "Maximum output width. Can only be provided if `outputSize` is `originalImage` or `croppedSubject`. Useful for resizing an image while keeping the aspect ratio.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxHeight",
+            "in": "query",
+            "description": "Maximum output height. Can only be provided if `outputSize` is `originalImage` or `croppedSubject`. Useful for redimensioning while keeping the aspect ratio.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "horizontalAlignment",
+            "in": "query",
+            "description": "[Advanced] Defines the horizontal alignment of the cutout subject within its bounding box.\n\nSpecifying a custom horizontal alignment will implicitly set `ignorePaddingAndSnapOnCroppedSides` to `false` for the horizontal direction.",
+            "schema": {
+              "enum": ["left", "center", "right"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "verticalAlignment",
+            "in": "query",
+            "description": "[Advanced] Defines the vertical alignment of the cutout subject within its bounding box.\n\nSpecifying a custom vertical alignment will implicitly set `ignorePaddingAndSnapOnCroppedSides` to `false` for the vertical direction.",
+            "schema": {
+              "enum": ["top", "center", "bottom"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "ignorePaddingAndSnapOnCroppedSides",
+            "in": "query",
+            "description": "If set to `true` (default), cropped sides of the subject will snap to the edges. For instance, for a portrait image cropped below the elbows, the subject will be aligned at the bottom even if a bottom padding is provided (but it will still respect bottom margin).\n\nCan't be provided if `removeBackground` is set to `false`.",
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "referenceBox",
+            "in": "query",
+            "description": "[Advanced] `subjectBox` by default. When set to `originalImage`, the padding/margin will be around the original image and not the cropped subject.\n\nCan't be provided if `removeBackground` is set to `false`.",
+            "schema": {
+              "default": "subjectBox",
+              "enum": ["subjectBox", "originalImage"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "keepExistingAlphaChannel",
+            "in": "query",
+            "description": "If set to `auto` and if the image has transparency, the existing transparency will be used to cutout the subject.",
+            "schema": {
+              "default": "never",
+              "enum": ["auto", "never"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "preserveMetadata",
+            "in": "query",
+            "description": "Controls which metadata from the original image will be preserved in the output image.\n\n- `never`: No metadata preservation (default)\n- `xmp`: Preserve XMP metadata including camera settings, copyright information, and other embedded metadata\n- `exifSubset`: Preserve EXIF Copyright (IFD0) and UserComment (ExifIFD) fields only",
+            "schema": {
+              "default": "never",
+              "enum": ["never", "xmp", "exifSubset"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "templateId",
+            "in": "query",
+            "description": "The ID of the template to render.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "flatLay.mode",
+            "in": "query",
+            "description": "Must be set to `ai.auto` to enable flat lay generation.",
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "flatLay.prompt",
+            "in": "query",
+            "description": "Optional text prompt to guide the generation style.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flatLay.size",
+            "in": "query",
+            "description": "The output size of the generated image.",
+            "schema": {
+              "default": "SQUARE_HD",
+              "enum": ["PORTRAIT_HD_16_9", "PORTRAIT_HD_4_3", "PORTRAIT_HD_3_2", "SQUARE_HD", "LANDSCAPE_HD_3_2", "LANDSCAPE_HD_4_3", "LANDSCAPE_HD_16_9"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "ghostMannequin.mode",
+            "in": "query",
+            "description": "Must be set to `ai.auto` to enable ghost mannequin generation.",
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "ghostMannequin.prompt",
+            "in": "query",
+            "description": "Optional text prompt to guide the generation style.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ghostMannequin.size",
+            "in": "query",
+            "description": "The output size of the generated image.",
+            "schema": {
+              "default": "SQUARE_HD",
+              "enum": ["PORTRAIT_HD_16_9", "PORTRAIT_HD_4_3", "PORTRAIT_HD_3_2", "SQUARE_HD", "LANDSCAPE_HD_3_2", "LANDSCAPE_HD_4_3", "LANDSCAPE_HD_16_9"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "virtualModel.mode",
+            "in": "query",
+            "description": "Must be set to `ai.auto` to enable virtual model generation.",
+            "schema": {
+              "const": "ai.auto",
+              "type": "string"
+            }
+          },
+          {
+            "name": "virtualModel.prompt",
+            "in": "query",
+            "description": "Optional text prompt to guide the generation style.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "virtualModel.pose",
+            "in": "query",
+            "description": "The pose of the model in the generated image.",
+            "schema": {
+              "default": "random",
+              "enum": ["random", "standing", "34turn", "powerstance", "walkingforward", "handinpocket", "crossedarms", "back", "overtheshoulder", "seated", "adjustingclothing", "playfulspin"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "virtualModel.quality",
+            "in": "query",
+            "description": "The output quality of the generated image. Higher quality produces larger images. `standard` outputs ~1K, `advanced` ~2K, and `premium` ~4K resolution.",
+            "schema": {
+              "default": "standard",
+              "enum": ["standard", "advanced", "premium"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "virtualModel.size",
+            "in": "query",
+            "description": "The output size of the generated image.",
+            "schema": {
+              "default": "PORTRAIT_HD_3_2",
+              "enum": ["PORTRAIT_HD_16_9", "PORTRAIT_HD_4_3", "PORTRAIT_HD_3_2", "SQUARE_HD", "LANDSCAPE_HD_3_2", "LANDSCAPE_HD_4_3", "LANDSCAPE_HD_16_9"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "virtualModel.model",
+            "in": "query",
+            "description": "The model (person) to use for the virtual try-on. Either a preset model name or a custom image.",
+            "schema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "preset": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "enum": ["avery", "sam", "taylor", "kendall", "jordan", "casey", "alex", "maya", "reece", "lena", "julia", "jackson", "sophia", "emma", "ava", "zoe", "fiona"],
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["preset"],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "custom": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "imageFile": {
+                          "description": "Bytes of a custom model image. Only available in the POST request.",
+                          "format": "binary",
+                          "type": "string"
+                        },
+                        "imageUrl": {
+                          "description": "URL of a custom model image.",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": ["custom"],
+                  "type": "object"
+                }
+              ],
+              "default": {
+                "preset": {
+                  "name": "avery"
+                }
+              }
+            }
+          },
+          {
+            "name": "virtualModel.scene",
+            "in": "query",
+            "description": "The scene (background/environment) to use. Either a preset scene name or a custom image.",
+            "schema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "preset": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "enum": ["random", "street", "bedroom", "sunset", "factory", "studio", "coloredstudio", "concretestudio", "beach", "tropical", "library", "forest", "businessdistrict", "countryside", "flowers", "goldenlight", "mountain", "pool", "latincity", "cafe", "asiancity", "nightlights", "desert"],
+                          "type": "string"
+                        }
+                      },
+                      "required": ["name"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["preset"],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "custom": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "imageFile": {
+                          "description": "Bytes of a custom scene image. Only available in the POST request.",
+                          "format": "binary",
+                          "type": "string"
+                        },
+                        "imageUrl": {
+                          "description": "URL of a custom scene image.",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": ["custom"],
+                  "type": "object"
+                }
+              ],
+              "default": {
+                "preset": {
+                  "name": "random"
+                }
+              }
+            }
+          },
+          {
+            "name": "virtualModel.additionalProductImages",
+            "in": "query",
+            "description": "Additional product images showing different angles or details of the same item. These help the model better understand the product and generate more accurate results.",
+            "schema": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "imageFile": {
+                    "description": "Bytes of an additional product image. Only available in the POST request.",
+                    "format": "binary",
+                    "type": "string"
+                  },
+                  "imageUrl": {
+                    "description": "URL of an additional product image.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "maxItems": 4,
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          {
+            "name": "layers",
+            "in": "query",
+            "schema": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "text": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "backgroundColor": { "type": "string" },
+                          "content": { "type": "string" },
+                          "font": { "type": "string" },
+                          "foregroundColor": { "type": "string" }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "required": ["text"],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "image": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "horizontalAlignment": {
+                            "enum": ["left", "center", "right"],
+                            "type": "string"
+                          },
+                          "imageFile": {
+                            "format": "binary",
+                            "type": "string"
+                          },
+                          "imageFromPrompt": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "prompt": { "minLength": 1, "type": "string" },
+                              "seed": { "type": "number" },
+                              "size": {
+                                "enum": ["LANDSCAPE_16_9", "LANDSCAPE_4_3", "PORTRAIT_16_9", "PORTRAIT_4_3", "SQUARE_HD"],
+                                "type": "string"
+                              }
+                            },
+                            "required": ["prompt"],
+                            "type": "object"
+                          },
+                          "imageUrl": { "type": "string" },
+                          "margin": { "type": ["number", "string"] },
+                          "marginBottom": { "type": ["number", "string"] },
+                          "marginLeft": { "type": ["number", "string"] },
+                          "marginRight": { "type": ["number", "string"] },
+                          "marginTop": { "type": ["number", "string"] },
+                          "padding": { "type": ["number", "string"] },
+                          "paddingBottom": { "type": ["number", "string"] },
+                          "paddingLeft": { "type": ["number", "string"] },
+                          "paddingRight": { "type": ["number", "string"] },
+                          "paddingTop": { "type": ["number", "string"] },
+                          "removeBackground": {
+                            "enum": ["auto", "never"],
+                            "type": "string"
+                          },
+                          "segmentation": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "mode": {
+                                "enum": ["keepSalientObject", "ignoreSalientObject"],
+                                "type": "string"
+                              },
+                              "negativePrompt": { "type": "string" },
+                              "prompt": { "type": "string" }
+                            },
+                            "required": ["prompt"],
+                            "type": "object"
+                          },
+                          "useForAIBackground": {
+                            "enum": ["auto", "never"],
+                            "type": "string"
+                          },
+                          "verticalAlignment": {
+                            "enum": ["top", "center", "bottom"],
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "required": ["image"],
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK — The edited image as binary data",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "$ref": "#/components/schemas/image-response"
+                }
+              }
+            },
+            "headers": {
+              "pr-ai-background-seed": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "The seed used when generating the background. Can be used to get similar looking results for the same prompt."
+              },
+              "pr-texts-detected": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "When removing texts from an image, it will return the number of texts detected."
+              },
+              "pr-unsupported-attributes": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "[Temporary] If the request contains attributes that are not supported by the API, this header will be returned with a list of the unsupported attributes. Soon to be replaced by a 400 Bad Request response."
+              },
+              "pr-edit-further-url": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "A URL to open the result of the API call in the Photoroom webapp and edit it further."
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/edit-image-bad-request"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payment-error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unknown-error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "edit-image-post",
+        "summary": "Image Editing v2 — POST (Plus plan)",
+        "description": "This endpoint processes an image and applies one or more edits: background removal, AI-generated backgrounds (background.prompt), realistic shadows (shadow.mode), relighting (lighting.mode), text removal (textRemoval.mode), background blur (background.blur.*), subject outline (outline.*), AI beautification (beautify.mode), AI expand (expand.mode), AI uncrop (uncrop.mode), AI upscale (upscale.mode), and positioning/resizing (padding, margin, outputSize).\n\nEdits can be combined in a single call.\n\nIt accepts an image file for the image. If you want to send a URL, please use the GET endpoint. For more details: https://docs.photoroom.com/image-editing-api/which-endpoints-are-available.\n\nUse this POST endpoint when you need to upload image files directly as multipart/form-data.\n\nFull documentation: https://docs.photoroom.com/image-editing-api-plus-plan/quickstart-guide",
+        "servers": [
+          {
+            "url": "https://image-api.photoroom.com",
+            "description": "Production server (Plus plan)"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Bytes of the main image used by the API. The POST endpoint accepts `imageFile` only.\n\nThe maximum size of the image is 30MB.\n\nIf you want to send the URL of an image, please instead use the GET endpoint with the argument `imageUrl`."
+                  },
+                  "removeBackground": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If enabled (default), the background of the image will be removed using PhotoRoom's award-winning algorithm."
+                  },
+                  "background.color": {
+                    "type": "string",
+                    "default": "transparent",
+                    "description": "Color of the background. Can be a hex color without the hash sign or color name."
+                  },
+                  "background.imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Bytes of the image to use as a background. Only available in the POST request.\n\nCan't be provided if `removeBackground` is set to `false`.\n\nThe maximum size of the image is 30MB."
+                  },
+                  "background.prompt": {
+                    "type": "string",
+                    "description": "Prompt to use for guiding the background generation process."
+                  },
+                  "background.negativePrompt": {
+                    "type": "string",
+                    "description": "(LEGACY) A negative prompt to use for guiding the background generation process."
+                  },
+                  "background.expandPrompt": {
+                    "description": "If `ai.auto`, a pre-processing step is applied to expand the prompt into a longer form."
+                  },
+                  "background.seed": {
+                    "type": "number",
+                    "description": "Seed used to generate the background."
+                  },
+                  "background.scaling": {
+                    "type": "string",
+                    "default": "fill",
+                    "enum": ["fit", "fill"],
+                    "description": "Whether the background should fit or fill the output image."
+                  },
+                  "background.guidance.imageFile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Bytes of the image to use as a background image guidance. Only available in the POST request.\n\nThe maximum size of the image is 30MB."
+                  },
+                  "background.guidance.scale": {
+                    "type": "number",
+                    "default": 0.6,
+                    "maximum": 1,
+                    "description": "How closely the generated background will match the guiding image, between 0 and 1."
+                  },
+                  "background.blur.mode": {
+                    "type": "string",
+                    "enum": ["gaussian", "bokeh"],
+                    "description": "Type of blur to apply to the background."
+                  },
+                  "background.blur.radius": {
+                    "type": "number",
+                    "default": 0.01,
+                    "exclusiveMinimum": 0,
+                    "maximum": 0.05,
+                    "description": "Radius of the blur effect."
+                  },
+                  "shadow.mode": {
+                    "type": "string",
+                    "enum": ["ai.soft", "ai.hard", "ai.floating"],
+                    "description": "Shadow generation mode."
+                  },
+                  "lighting.mode": {
+                    "type": "string",
+                    "enum": ["ai.auto", "ai.preserve-hue-and-saturation"],
+                    "description": "Lighting mode to use on the main image."
+                  },
+                  "textRemoval.mode": {
+                    "type": "string",
+                    "enum": ["ai.artificial", "ai.natural", "ai.all"],
+                    "description": "Text removal mode."
+                  },
+                  "outline.color": {
+                    "type": "string",
+                    "description": "Apply a colored outline around the subject."
+                  },
+                  "outline.width": {
+                    "type": "number",
+                    "default": 0.03,
+                    "minimum": 0,
+                    "maximum": 0.1,
+                    "description": "Width of the outline relative to the image size."
+                  },
+                  "outline.blurRadius": {
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0,
+                    "maximum": 0.025,
+                    "description": "Blur radius for the outline."
+                  },
+                  "beautify.mode": {
+                    "type": "string",
+                    "enum": ["ai.auto", "ai.food", "ai.car"],
+                    "description": "Beautify mode for product images."
+                  },
+                  "beautify.seed": {
+                    "type": "number",
+                    "description": "Seed used to run the subject beautifier."
+                  },
+                  "expand.mode": {
+                    "type": "string",
+                    "description": "Expand mode. Set to `ai.auto` to fill transparent pixels."
+                  },
+                  "expand.seed": {
+                    "type": "number",
+                    "description": "Seed used to generate the expanded background."
+                  },
+                  "uncrop.mode": {
+                    "type": "string",
+                    "description": "Uncrop mode. Set to `ai.auto` for automatic uncropping."
+                  },
+                  "uncrop.seed": {
+                    "type": "number",
+                    "description": "Seed used for uncropping."
+                  },
+                  "upscale.mode": {
+                    "type": "string",
+                    "enum": ["ai.fast", "ai.slow"],
+                    "description": "(ALPHA) Upscale mode."
+                  },
+                  "editWithAI.mode": {
+                    "type": "string",
+                    "description": "Edit with AI mode. Currently only `ai.auto` is supported."
+                  },
+                  "editWithAI.prompt": {
+                    "type": "string",
+                    "description": "The natural language prompt describing the change to apply."
+                  },
+                  "editWithAI.seed": {
+                    "type": "number",
+                    "description": "Seed used for the AI edit generation."
+                  },
+                  "describeAnyChange.mode": {
+                    "type": "string",
+                    "description": "(DEPRECATED) Use `editWithAI.mode` instead."
+                  },
+                  "describeAnyChange.prompt": {
+                    "type": "string",
+                    "description": "(DEPRECATED) Use `editWithAI.prompt` instead."
+                  },
+                  "describeAnyChange.seed": {
+                    "type": "number",
+                    "description": "(DEPRECATED) Use `editWithAI.seed` instead."
+                  },
+                  "imageFromPrompt.prompt": {
+                    "type": "string",
+                    "description": "The prompt to use for generating the image."
+                  },
+                  "imageFromPrompt.seed": {
+                    "type": "number",
+                    "description": "Seed used to run the AI image generator."
+                  },
+                  "imageFromPrompt.size": {
+                    "type": "string",
+                    "enum": ["LANDSCAPE_16_9", "LANDSCAPE_4_3", "PORTRAIT_16_9", "PORTRAIT_4_3", "SQUARE_HD"],
+                    "description": "Supported sizes for AI image generation."
+                  },
+                  "segmentation.mode": {
+                    "type": "string",
+                    "enum": ["keepSalientObject", "ignoreSalientObject"],
+                    "description": "Controls whether the salient object should be kept or ignored."
+                  },
+                  "segmentation.prompt": {
+                    "type": "string",
+                    "description": "A textual description of what the segmentation should keep."
+                  },
+                  "segmentation.negativePrompt": {
+                    "type": "string",
+                    "description": "A textual description of what the segmentation should remove."
+                  },
+                  "export.format": {
+                    "type": "string",
+                    "default": "png",
+                    "enum": ["png", "jpeg", "jpg", "webp"],
+                    "description": "The format of the result image."
+                  },
+                  "export.dpi": {
+                    "type": "number",
+                    "minimum": 72,
+                    "maximum": 1200,
+                    "description": "The pixel density of the result image."
+                  },
+                  "outputSize": {
+                    "type": "string",
+                    "default": "auto",
+                    "description": "Output size of the image."
+                  },
+                  "padding": {
+                    "type": ["number", "string"],
+                    "default": 0,
+                    "description": "General padding around the subject."
+                  },
+                  "paddingTop": {
+                    "type": ["number", "string"],
+                    "description": "Top padding override."
+                  },
+                  "paddingBottom": {
+                    "type": ["number", "string"],
+                    "description": "Bottom padding override."
+                  },
+                  "paddingLeft": {
+                    "type": ["number", "string"],
+                    "description": "Left padding override."
+                  },
+                  "paddingRight": {
+                    "type": ["number", "string"],
+                    "description": "Right padding override."
+                  },
+                  "margin": {
+                    "type": ["number", "string"],
+                    "default": 0,
+                    "description": "General margin around the subject."
+                  },
+                  "marginTop": {
+                    "type": ["number", "string"],
+                    "description": "Top margin override."
+                  },
+                  "marginBottom": {
+                    "type": ["number", "string"],
+                    "description": "Bottom margin override."
+                  },
+                  "marginLeft": {
+                    "type": ["number", "string"],
+                    "description": "Left margin override."
+                  },
+                  "marginRight": {
+                    "type": ["number", "string"],
+                    "description": "Right margin override."
+                  },
+                  "scaling": {
+                    "type": "string",
+                    "default": "fit",
+                    "enum": ["fit", "fill"],
+                    "description": "Whether the subject should fit or fill the output image."
+                  },
+                  "maxWidth": {
+                    "type": "number",
+                    "description": "Maximum output width."
+                  },
+                  "maxHeight": {
+                    "type": "number",
+                    "description": "Maximum output height."
+                  },
+                  "horizontalAlignment": {
+                    "type": "string",
+                    "enum": ["left", "center", "right"],
+                    "description": "[Advanced] Horizontal alignment of the cutout subject."
+                  },
+                  "verticalAlignment": {
+                    "type": "string",
+                    "enum": ["top", "center", "bottom"],
+                    "description": "[Advanced] Vertical alignment of the cutout subject."
+                  },
+                  "ignorePaddingAndSnapOnCroppedSides": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If true, cropped sides of the subject will snap to the edges."
+                  },
+                  "referenceBox": {
+                    "type": "string",
+                    "default": "subjectBox",
+                    "enum": ["subjectBox", "originalImage"],
+                    "description": "[Advanced] Reference box for positioning."
+                  },
+                  "keepExistingAlphaChannel": {
+                    "type": "string",
+                    "default": "never",
+                    "enum": ["auto", "never"],
+                    "description": "Whether to use existing transparency for cutout."
+                  },
+                  "preserveMetadata": {
+                    "type": "string",
+                    "default": "never",
+                    "enum": ["never", "xmp", "exifSubset"],
+                    "description": "Controls which metadata to preserve."
+                  },
+                  "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The ID of the template to render."
+                  },
+                  "flatLay.mode": {
+                    "type": "string",
+                    "description": "Set to `ai.auto` to enable flat lay generation."
+                  },
+                  "flatLay.prompt": {
+                    "type": "string",
+                    "description": "Optional text prompt to guide flat lay generation."
+                  },
+                  "flatLay.size": {
+                    "type": "string",
+                    "enum": ["PORTRAIT_HD_16_9", "PORTRAIT_HD_4_3", "PORTRAIT_HD_3_2", "SQUARE_HD", "LANDSCAPE_HD_3_2", "LANDSCAPE_HD_4_3", "LANDSCAPE_HD_16_9"],
+                    "description": "The output size of the flat lay image."
+                  },
+                  "ghostMannequin.mode": {
+                    "type": "string",
+                    "description": "Set to `ai.auto` to enable ghost mannequin generation."
+                  },
+                  "ghostMannequin.prompt": {
+                    "type": "string",
+                    "description": "Optional text prompt for ghost mannequin generation."
+                  },
+                  "ghostMannequin.size": {
+                    "type": "string",
+                    "enum": ["PORTRAIT_HD_16_9", "PORTRAIT_HD_4_3", "PORTRAIT_HD_3_2", "SQUARE_HD", "LANDSCAPE_HD_3_2", "LANDSCAPE_HD_4_3", "LANDSCAPE_HD_16_9"],
+                    "description": "The output size of the ghost mannequin image."
+                  },
+                  "virtualModel.mode": {
+                    "type": "string",
+                    "description": "Set to `ai.auto` to enable virtual model generation."
+                  },
+                  "virtualModel.prompt": {
+                    "type": "string",
+                    "description": "Optional text prompt for virtual model generation."
+                  },
+                  "virtualModel.pose": {
+                    "type": "string",
+                    "default": "random",
+                    "enum": ["random", "standing", "34turn", "powerstance", "walkingforward", "handinpocket", "crossedarms", "back", "overtheshoulder", "seated", "adjustingclothing", "playfulspin"],
+                    "description": "The pose of the model."
+                  },
+                  "virtualModel.quality": {
+                    "type": "string",
+                    "default": "standard",
+                    "enum": ["standard", "advanced", "premium"],
+                    "description": "The output quality of the virtual model image."
+                  },
+                  "virtualModel.size": {
+                    "type": "string",
+                    "default": "PORTRAIT_HD_3_2",
+                    "enum": ["PORTRAIT_HD_16_9", "PORTRAIT_HD_4_3", "PORTRAIT_HD_3_2", "SQUARE_HD", "LANDSCAPE_HD_3_2", "LANDSCAPE_HD_4_3", "LANDSCAPE_HD_16_9"],
+                    "description": "The output size of the virtual model image."
+                  },
+                  "virtualModel.model": {
+                    "description": "The model (person) to use for the virtual try-on."
+                  },
+                  "virtualModel.scene": {
+                    "description": "The scene (background/environment) to use."
+                  },
+                  "virtualModel.additionalProductImages": {
+                    "type": "array",
+                    "description": "Additional product images showing different angles."
+                  },
+                  "layers": {
+                    "type": "object",
+                    "description": "Layer definitions for compositing."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK — The edited image as binary data",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "$ref": "#/components/schemas/image-response"
+                }
+              }
+            },
+            "headers": {
+              "pr-ai-background-seed": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "The seed used when generating the background."
+              },
+              "pr-texts-detected": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "The number of texts detected in the image."
+              },
+              "pr-unsupported-attributes": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "[Temporary] Unsupported attributes in the request."
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/edit-image-bad-request"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/payment-error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unknown-error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/segment": {
+      "post": {
+        "operationId": "remove-background",
+        "summary": "Remove Background (Basic plan)",
+        "description": "Remove background from an image using PhotoRoom's segmentation API. This is the Basic plan endpoint hosted on sdk.photoroom.com.",
+        "servers": [
+          {
+            "url": "https://sdk.photoroom.com",
+            "description": "Production server (Basic plan)"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/remove-background-post-params"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "title": "Resulting image",
+                  "description": "The resulting image after rendering",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "base64img": {
+                      "type": "string",
+                      "title": "Base64 encoded image",
+                      "format": "base64"
+                    }
+                  },
+                  "required": ["base64img"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/basic-plan-error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/basic-plan-error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/v2/account": {
+      "get": {
+        "operationId": "account-details-v2",
+        "summary": "Account Details v2",
+        "description": "Get current account details, including remaining image edits and monthly quota.",
+        "servers": [
+          {
+            "url": "https://image-api.photoroom.com",
+            "description": "Production server (Plus plan)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "images": {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "number",
+                          "description": "The number of images available",
+                          "title": "Available"
+                        },
+                        "subscription": {
+                          "type": "number",
+                          "description": "The total number of images available in the subscription",
+                          "title": "Subscription",
+                          "minimum": 0
+                        }
+                      },
+                      "required": ["available", "subscription"]
+                    },
+                    "plan": {
+                      "type": "string",
+                      "description": "The name of the pricing plan",
+                      "title": "Plan"
+                    }
+                  },
+                  "required": ["images", "plan"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/edit-image-bad-request"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key for authenticating requests. Pass as the `x-api-key` header."
+      }
+    },
+    "schemas": {
+      "image-response": {
+        "type": "string",
+        "title": "Resulting image",
+        "description": "The resulting image after rendering",
+        "format": "binary"
+      },
+      "edit-image-bad-request": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "The message describing the error",
+                "title": "Message"
+              }
+            },
+            "required": ["message"]
+          }
+        },
+        "required": ["error"],
+        "title": "Invalid value"
+      },
+      "payment-error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "detail": {
+                "type": "string",
+                "description": "The details of the error",
+                "title": "Details"
+              }
+            },
+            "required": ["detail"]
+          }
+        },
+        "required": ["error"],
+        "title": "Payment Error"
+      },
+      "unknown-error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "The message describing the error",
+                "title": "Message"
+              }
+            },
+            "required": ["message"]
+          }
+        },
+        "required": ["error"],
+        "title": "Unknown Error"
+      },
+      "basic-plan-error": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "The details of the error",
+            "title": "Details"
+          },
+          "status_code": {
+            "type": "number",
+            "description": "The status code of the error",
+            "title": "Status Code"
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of the error",
+            "title": "Type"
+          }
+        },
+        "required": ["detail", "status_code", "type"],
+        "title": "Field Missing Error"
+      },
+      "remove-background-post-params": {
+        "type": "object",
+        "properties": {
+          "image_file": {
+            "type": "string",
+            "description": "The image file to render",
+            "title": "Image File",
+            "format": "binary"
+          },
+          "format": {
+            "type": "string",
+            "default": "png",
+            "title": "Format",
+            "description": "The format of the resulting image",
+            "enum": ["png", "jpg", "webp"]
+          },
+          "channels": {
+            "type": "string",
+            "default": "rgba",
+            "title": "Channels",
+            "description": "The channels of the resulting image",
+            "enum": ["rgba", "alpha"]
+          },
+          "bg_color": {
+            "type": "string",
+            "title": "Background Color",
+            "description": "The background color of the resulting image. Can be a hex code (`#FF00FF`) or a HTML color (`red`, `green`, etc.)"
+          },
+          "size": {
+            "type": "string",
+            "default": "full",
+            "title": "Size",
+            "description": "Will resize the output to the specified size. Can be `preview` (0.25 Megapixels), `medium` (1.5 MP), `hd` (4 MP) or `full` (36 MP, can be slower for large images). Useful for mobile apps that need smaller images.",
+            "enum": ["preview", "medium", "hd", "full"]
+          },
+          "crop": {
+            "type": "string",
+            "default": "false",
+            "title": "Crop",
+            "description": "If `true`, the image returned is cropped to the cutout border. Transparent pixels are removed from the border.",
+            "enum": ["true", "false"]
+          },
+          "despill": {
+            "type": "string",
+            "default": "false",
+            "title": "Green screen despilling",
+            "description": "If `true`, automatically removes colored reflections that have been left on the main subject by a green background.",
+            "enum": ["true", "false"]
+          }
+        },
+        "required": ["image_file"],
+        "title": "Remove Background POST params"
+      }
+    }
+  }
+}
