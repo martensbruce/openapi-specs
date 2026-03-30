@@ -1,0 +1,74 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Foodticket Experimental API",
+    "version": "1.0.0",
+    "description": "Experimental OpenAPI specification for Foodticket orders endpoint derived from the provided curl example."
+  },
+  "servers": [
+    {
+      "url": "https://api.foodticket.net",
+      "description": "Foodticket production API"
+    }
+  ],
+  "security": [
+    {
+      "OrderBuddyClientId": [],
+      "OrderBuddyApiKey": []
+    }
+  ],
+  "paths": {
+    "/1/orders": {
+      "get": {
+        "summary": "List orders",
+        "description": "Returns orders from the Foodticket API. Authentication is provided with the `X-OrderBuddy-Client-Id` and `X-OrderBuddy-API-Key` headers.",
+        "operationId": "listOrders",
+        "responses": {
+          "200": {
+            "description": "Successful orders response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "orders": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "5XX": {
+            "description": "Unexpected server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "OrderBuddyClientId": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-OrderBuddy-Client-Id",
+        "description": "OrderBuddy client identifier."
+      },
+      "OrderBuddyApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-OrderBuddy-API-Key",
+        "description": "OrderBuddy API key."
+      }
+    }
+  }
+}
