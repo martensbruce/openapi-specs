@@ -1,0 +1,1317 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Eitje Open API",
+    "description": "Eitje is a scheduling software platform that provides endpoints for managing workforce data across organizations with multiple locations and teams.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Eitje",
+      "url": "https://www.eitje.app"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://open-api.eitje.app/open_api",
+      "description": "Production"
+    },
+    {
+      "url": "https://open-api-test.eitje.app/open_api",
+      "description": "Test"
+    }
+  ],
+  "security": [
+    {
+      "partnerAuth": [],
+      "partnerPassword": [],
+      "apiAuth": [],
+      "apiPassword": []
+    }
+  ],
+  "paths": {
+    "/availability_shifts": {
+      "get": {
+        "operationId": "getAvailabilityShifts",
+        "summary": "List availability shifts",
+        "description": "Returns availability shifts for employees. Tracks whether employees are available, unavailable, or partly unavailable.",
+        "tags": [
+          "Availability Shifts"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartDate"
+          },
+          {
+            "$ref": "#/components/parameters/EndDate"
+          },
+          {
+            "$ref": "#/components/parameters/DateFilterType"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AvailabilityShift"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check_ins": {
+      "get": {
+        "operationId": "getCheckIns",
+        "summary": "List pending check-ins",
+        "description": "Returns pending check-in records (employees who have checked in but not yet checked out).",
+        "tags": [
+          "Check Ins"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CheckIn"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/environments": {
+      "get": {
+        "operationId": "getEnvironments",
+        "summary": "List environments",
+        "description": "Returns all venue/location environments in the organization.",
+        "tags": [
+          "Environments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Environment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "operationId": "getEvents",
+        "summary": "List events",
+        "description": "Returns workplace events. Maximum date range: 90 days for resource_date, 14 days for updated.",
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartDate"
+          },
+          {
+            "$ref": "#/components/parameters/EndDate"
+          },
+          {
+            "$ref": "#/components/parameters/DateFilterType"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Event"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leave_requests": {
+      "get": {
+        "operationId": "getLeaveRequests",
+        "summary": "List leave requests",
+        "description": "Returns employee leave requests. Maximum date range: 90 days for resource_date, 14 days for updated.",
+        "tags": [
+          "Leave Requests"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartDate"
+          },
+          {
+            "$ref": "#/components/parameters/EndDate"
+          },
+          {
+            "$ref": "#/components/parameters/DateFilterType"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LeaveRequest"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/skill_sets": {
+      "get": {
+        "operationId": "getSkillSets",
+        "summary": "List skill sets",
+        "description": "Returns all skill sets configured in the organization.",
+        "tags": [
+          "Skill Sets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SkillSet"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/planning_shifts": {
+      "get": {
+        "operationId": "getPlanningShifts",
+        "summary": "List planning shifts",
+        "description": "Returns scheduled work shifts. Requires start_date and end_date.",
+        "tags": [
+          "Planning Shifts"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartDate"
+          },
+          {
+            "$ref": "#/components/parameters/EndDate"
+          },
+          {
+            "$ref": "#/components/parameters/DateFilterType"
+          },
+          {
+            "name": "wage_cost",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include wage cost data in the response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlanningShift"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/revenue_groups": {
+      "get": {
+        "operationId": "getRevenueGroups",
+        "summary": "List revenue groups",
+        "description": "Returns all revenue groups.",
+        "tags": [
+          "Revenue"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RevenueGroup"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/revenue_days": {
+      "get": {
+        "operationId": "getRevenueDays",
+        "summary": "List revenue days",
+        "description": "Returns daily revenue data. Maximum date range: 90 days for resource_date, 14 days for updated.",
+        "tags": [
+          "Revenue"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartDate"
+          },
+          {
+            "$ref": "#/components/parameters/EndDate"
+          },
+          {
+            "$ref": "#/components/parameters/DateFilterType"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RevenueDay"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/revenue_teams": {
+      "get": {
+        "operationId": "getRevenueTeams",
+        "summary": "List revenue teams",
+        "description": "Returns revenue team assignments with fractional percentages.",
+        "tags": [
+          "Revenue"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RevenueTeam"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shift_types": {
+      "get": {
+        "operationId": "getShiftTypes",
+        "summary": "List shift types",
+        "description": "Returns all shift types in the organization.",
+        "tags": [
+          "Shift Types"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ShiftType"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teams": {
+      "get": {
+        "operationId": "getTeams",
+        "summary": "List teams",
+        "description": "Returns all teams in the organization.",
+        "tags": [
+          "Teams"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Team"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/time_registration_shifts": {
+      "get": {
+        "operationId": "getTimeRegistrationShifts",
+        "summary": "List time registration shifts",
+        "description": "Returns actual worked hours/time registration records. Requires start_date and end_date.",
+        "tags": [
+          "Time Registration Shifts"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StartDate"
+          },
+          {
+            "$ref": "#/components/parameters/EndDate"
+          },
+          {
+            "$ref": "#/components/parameters/DateFilterType"
+          },
+          {
+            "name": "wage_cost",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Include wage cost data in the response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TimeRegistrationShift"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "getUsers",
+        "summary": "List users",
+        "description": "Returns all employees/users in the organization.",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "partnerAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Partner-Username",
+        "description": "Partner username credential. Must be used together with Partner-Password."
+      },
+      "partnerPassword": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Partner-Password",
+        "description": "Partner password credential."
+      },
+      "apiAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Api-Username",
+        "description": "API username credential. Must be used together with Api-Password."
+      },
+      "apiPassword": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Api-Password",
+        "description": "API password credential."
+      }
+    },
+    "parameters": {
+      "StartDate": {
+        "name": "start_date",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-01-01"
+        },
+        "description": "Start date for filtering (YYYY-MM-DD for resource_date, ISO8601 for updated)"
+      },
+      "EndDate": {
+        "name": "end_date",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-01-31"
+        },
+        "description": "End date for filtering (YYYY-MM-DD for resource_date, ISO8601 for updated)"
+      },
+      "DateFilterType": {
+        "name": "date_filter_type",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "resource_date",
+            "updated"
+          ],
+          "default": "resource_date"
+        },
+        "description": "Filter by resource date or last updated timestamp. Defaults to resource_date."
+      }
+    },
+    "schemas": {
+      "NameIdRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "IdRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        }
+      },
+      "AvailabilityShift": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "unavailable",
+              "partly_unavailable"
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Only present when status is partly_unavailable"
+          },
+          "end_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Only present when status is partly_unavailable"
+          }
+        }
+      },
+      "CheckIn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "team": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "user": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Environment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "team_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "from": {
+            "type": "string",
+            "nullable": true,
+            "description": "Start time in HH:MM format"
+          },
+          "till": {
+            "type": "string",
+            "nullable": true,
+            "description": "End time in HH:MM format"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          }
+        }
+      },
+      "LeaveRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "user": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "denied"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "process_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "start_datetime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_datetime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SkillSet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "environment_id": {
+            "type": "integer"
+          },
+          "color_code": {
+            "type": "string",
+            "description": "Hex color code"
+          },
+          "skill_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "planning_active": {
+            "type": "boolean"
+          },
+          "abbr": {
+            "type": "string"
+          }
+        }
+      },
+      "PlanningShift": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "break_minutes": {
+            "type": "integer"
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "user": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameIdRef"
+              }
+            ]
+          },
+          "team": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "skill_set": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameIdRef"
+              }
+            ]
+          },
+          "shift_type": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameIdRef"
+              }
+            ]
+          },
+          "meals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "time_registration_shift_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "wage_cost": {
+            "type": "number",
+            "nullable": true,
+            "description": "Only present when wage_cost=true query param is set"
+          }
+        }
+      },
+      "RevenueGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "growth_pct": {
+            "type": "number"
+          },
+          "target_pct": {
+            "type": "number"
+          },
+          "revenue_team_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "RevenueDay": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amt_in_cents": {
+            "type": "integer"
+          },
+          "forecast_amt_in_cents": {
+            "type": "integer"
+          },
+          "revenue_group": {
+            "$ref": "#/components/schemas/NameIdRef"
+          }
+        }
+      },
+      "RevenueTeam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "team": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "fract": {
+            "type": "number",
+            "description": "Fractional percentage of revenue attributed to this team"
+          },
+          "revenue_group": {
+            "$ref": "#/components/schemas/NameIdRef"
+          }
+        }
+      },
+      "ShiftType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "hide_end": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "show_call": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "emoji": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "Team": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/NameIdRef"
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "scheduling_enabled": {
+            "type": "boolean"
+          },
+          "scheduling_disabled": {
+            "type": "boolean"
+          },
+          "revenue_active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TimeRegistrationShift": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "break_minutes": {
+            "type": "integer"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "approved": {
+            "type": "boolean"
+          },
+          "exported_to_hr_integration": {
+            "type": "boolean"
+          },
+          "planning_shift_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "check_in_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/IdRef"
+          },
+          "team": {
+            "$ref": "#/components/schemas/IdRef"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/IdRef"
+          },
+          "skill_set": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NameIdRef"
+              }
+            ]
+          },
+          "type": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "meals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "wage_cost": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "total_amount": {
+                "type": "number"
+              }
+            },
+            "description": "Only present when wage_cost=true query param is set"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "external_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NameIdRef"
+            }
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NameIdRef"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Availability Shifts",
+      "description": "Track employee availability status"
+    },
+    {
+      "name": "Check Ins",
+      "description": "Monitor pending employee check-in records"
+    },
+    {
+      "name": "Environments",
+      "description": "Manage venue/location environments"
+    },
+    {
+      "name": "Events",
+      "description": "Create and manage workplace events"
+    },
+    {
+      "name": "Leave Requests",
+      "description": "Handle employee leave requests with approval workflows"
+    },
+    {
+      "name": "Skill Sets",
+      "description": "Manage skill set configurations"
+    },
+    {
+      "name": "Planning Shifts",
+      "description": "Create and manage scheduled work shifts"
+    },
+    {
+      "name": "Revenue",
+      "description": "Revenue groups, teams, and daily revenue data"
+    },
+    {
+      "name": "Shift Types",
+      "description": "Manage shift type definitions"
+    },
+    {
+      "name": "Teams",
+      "description": "Organize staff into business units"
+    },
+    {
+      "name": "Time Registration Shifts",
+      "description": "Track actual worked hours"
+    },
+    {
+      "name": "Users",
+      "description": "Manage employee profiles"
+    }
+  ]
+}
