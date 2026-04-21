@@ -1,0 +1,982 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "booq's partner integration ticket API",
+    "contact": {
+      "name": "Integrations team",
+      "email": "integrations@booqcloud.com"
+    },
+    "version": "V3",
+    "description": " <h2>Type of API</h2> Enterprise specific, REST, pull-based API. The clients initiate all data transfers by means of HTTP GET requests. Each type of event has its own endpoint.\n<h3>Event based</h3> Data provided by this API represents 'business events'. These single events may be re-packaged to afford batching but the individual events are not accumulated in any way.\n<h2>Authentication</h2> OAuth 2, machine to machine (M2M), using the client credentials grant. (<a href='https://oauth.net/2/grant-types/client-credentials/'>https://oauth.net/2/grant-types/client-credentials/</a>). There is a separate document available that gives detailed information on how to authenticate.\n<h2>Versioning</h2> This API will follow the booq API versioning guidelines. Summary: URL versioning; booqcloud.com/partner/pos/version-x/orders\n<hr>\n<h2>Events<h2> <h3>Are Enterprise specific</h3> Only single enterprises can be queried through this API. The provided API keys for using this API are Enterprise specific.\n<h3>C&M entities are identified by external IDs</h3> External systems can use their own IDs (id). These 'external' IDs (id) are unique for a type of resource within a given enterprise.\n<h3>Requesting events</h3> Fetch the `{next}` events, starting from the next event after `{marker}`. `{marker}` is returned by booq and represents the offset in the stream of the last successfully returned event. If there are no events in the result, the returned marker is an empty string. </br><br/> Please note: there are separate endpoints for each type of event. <strong>Markers are event type specific</strong>.\n<h4>Limit the number of events per request</h4> <strong>Important, please note:</strong> Do not try to fetch too many events in a single request. We limit the size of the payload to ensure availability and enforce fair use. Please limit the number of events per request to <b>200</b>. If the payload exceeds the maximum size, due to requesting too many events, the API will report back an error: <b>500 Internal Server Error</b>. Should you encounter difficulties you can always contact a booq API representative to discuss options concerning this number.\n<hr>\n<h2>Value types</h2> <h3>NULL values</h3> The responses from this API will not contain 'null' values. If the value of a property is unknown or missing (not supplied), the property is removed from the payload. A 'null' value is different from an 'empty' or '0' value. An empty string ('') is a valid value as is 0, 0.00 or an empty array.\n<h3>Values representing a monetary amount</h3> Since JSON only supports one numeric data type, number, we need to make sure we serialize and parse monetary values in a correct way. <a href='https://www.json.org'>JSON</a> allow s us to be specific about the scale and precision of the number we want to represent. In booq all monetary amounts are expressed in a currency with a precision (or rather scale) of that currency.\n<h3>Currency</h3> booq uses <a href='https://www.iso.org/iso-4217-currency-codes.html'>ISO currency codes</a> for identification.\n<h3>Values representing a DATE, TIME or DATE and TIME (timestamp)</h3> This API uses the ISO 8601 representation for these value types (for the official standard see: <a href='https://www.iso.org/iso-8601-date-and-time-format.html'>iso.org</a> - often used: <a href='https://en.wikipedia.org/wiki/ISO_8601'>wikipedia</a>. We use local time (the time experienced by the user) Example: 20190415T14:50:00 - 15th of March 2019, 14h 50m 0s, local time.\n<h3>Values representing a locale (language & country)</h3> The representation of Locales in this API conforms to the Locale representation used by Java and is a string that consists of the ISO 639 language code and the ISO 3166 country code separated with a hyphen. Example: 'nl-NL'. <hr> "
+  },
+  "servers": [
+    {
+      "url": "https://{silo}{baseurl}/partner/pos/v3",
+      "variables": {
+        "silo": {
+          "default": "partners.sandbox."
+        },
+        "baseurl": {
+          "default": "booqcloud.com"
+        }
+      },
+      "description": "Domain provided to you by booq integration consultant."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Orders",
+      "description": "API to retrieve orders"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/orders": {
+      "get": {
+        "summary": "Retrieve a list of orders",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "marker",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Marker"
+            }
+          },
+          {
+            "name": "next",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "Also 'count', the size of the collection retrieved and shown. Please limit the number of events per request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "summary": "Get specific order by id",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "<strong>Return an event of a specific type with a specific event identifier</strong>. The event identifier is context specific, it identifies an event by its event type specific identifier. For example the the 'id' of an order. This identifier has no link to markers.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "02acfb63-ce2b-411d-a075-7c60f2e3b290"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "ForbiddenError": {
+        "description": "User is not authorized to access this resource with an explicit deny"
+      }
+    },
+    "schemas": {
+      "Marker": {
+        "title": "Marker",
+        "description": "The markers represent a chronology; events are placed in a collection based on their 'time of arrival'. These markers are not linked to event identifiers (e.g. the ID of an order) and do not provide any information about the order in which the events are created. Order B may be fetched by a higher marker than order A but may be created at an earlier moment in time. <strong>Markers are event type specific</strong><br/> `{marker}` is returned by booq and represents the offset in the stream of the last successfully returned event. If there are no events in the result, the returned marker is an empty string.",
+        "type": "string",
+        "example": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000163334661434200000000000000003453"
+      },
+      "OrderResponse": {
+        "title": "OrderResponse",
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "time the response was generated",
+            "example": "2023-01-27T11:00:25.220131Z"
+          },
+          "events": {
+            "type": "array",
+            "description": "A list of orders.",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "size of 'events' collection",
+            "example": 1
+          },
+          "marker": {
+            "$ref": "#/components/schemas/Marker"
+          }
+        }
+      },
+      "Order": {
+        "title": "Order",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique ID of the Order.",
+            "example": "02acfb63-ce2b-411d-a075-7c60f2e3b290"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "example": "2021-09-22T14:59:25Z"
+          },
+          "lastUpdatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "example": "2021-09-22T14:59:25Z"
+          },
+          "workDay": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "receiptNr": {
+            "type": "string",
+            "description": "The receipt number as printed on the customer's receipt.",
+            "example": "34234"
+          },
+          "storeId": {
+            "type": "string",
+            "description": "The ID of the Store this order was created at.",
+            "example": "store-ID"
+          },
+          "occupiedSeatsNumber": {
+            "type": "integer",
+            "description": "Occupied seats number. The amount of people registered to a table. Also known as 'Couverts'",
+            "example": 1
+          },
+          "externalCustomerReference": {
+            "type": "string",
+            "description": "The external customer reference can be used for customer identification by the external systems. Has to meet this regex [A-Za-z0-9-_]{0,128}.",
+            "example": "some-external_46546-137895132_reference-45586776"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "customers": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "example": [
+              "customer-ID",
+              "customer-parent-ID",
+              "customer-root-ID"
+            ]
+          },
+          "salesPoint": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemProps"
+              }
+            ],
+            "example": {
+              "id": "sp-ID",
+              "name": "Table 23"
+            }
+          },
+          "salesPoints": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "description": "The SalesPoint the order was assigned to. Can differ from the SalesPoints of the order's SalesItems.",
+            "example": [
+              "sp-ID",
+              "sp-parent-ID",
+              "sp-root-ID"
+            ]
+          },
+          "delivery": {
+            "type": "object",
+            "properties": {
+              "locationId": {
+                "type": "string",
+                "example": "location-ID"
+              },
+              "locationName": {
+                "type": "string",
+                "example": "location"
+              },
+              "time": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DateTime"
+                  }
+                ],
+                "example": "2021-09-22T17:30:00Z"
+              }
+            }
+          },
+          "remarks": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "description": "Array of arbitrary remarks as entered in the POS client application.",
+            "example": [
+              "Small portion",
+              "allergic to peanuts"
+            ]
+          },
+          "discounts": {
+            "type": "array",
+            "description": "Order (total) discounts. Scale of amounts is in the order currency.",
+            "items": {
+              "$ref": "#/components/schemas/Discount"
+            }
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "inclVAT": {
+            "type": "boolean",
+            "description": "Amounts such as prices, order totals, order item totals include the applicable VAT.",
+            "example": true
+          },
+          "salesItems": {
+            "type": "array",
+            "description": "Inline collection of 'SalesItem' objects.",
+            "items": {
+              "$ref": "#/components/schemas/SalesItem"
+            }
+          },
+          "recyclingDepositItems": {
+            "type": "array",
+            "description": "Inline collection of 'recyclingDepositItem' objects",
+            "items": {
+              "$ref": "#/components/schemas/RecyclingDepositItem"
+            }
+          },
+          "paymentItems": {
+            "type": "array",
+            "description": "Inline collection of 'Payment' objects.",
+            "items": {
+              "$ref": "#/components/schemas/PaymentItem"
+            }
+          },
+          "vatItems": {
+            "type": "array",
+            "description": "Inline collection of 'VAT items', each representing a VAT total.",
+            "items": {
+              "$ref": "#/components/schemas/VATItem"
+            }
+          },
+          "orderTotal": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "promotions": {
+            "type": "array",
+            "description": "Inline collection of 'AppliedPromotion' objects.",
+            "items": {
+              "$ref": "#/components/schemas/AppliedPromotion"
+            }
+          },
+          "rewardTokens": {
+            "type": "array",
+            "description": "Inline collection of 'RewardToken' objects.",
+            "items": {
+              "$ref": "#/components/schemas/RewardToken"
+            }
+          }
+        }
+      },
+      "ItemProps": {
+        "title": "ItemProps",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "item-ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "Name of item"
+          }
+        }
+      },
+      "Date": {
+        "title": "Date",
+        "type": "string",
+        "format": "date",
+        "example": "2021-10-04"
+      },
+      "DateTime": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2021-09-22T14:59:25Z"
+      },
+      "StringArray": {
+        "title": "StringArray",
+        "items": {
+          "type": "string",
+          "example": "Text"
+        },
+        "example": [
+          "Text 1",
+          "Text 2"
+        ]
+      },
+      "User": {
+        "title": "User",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ItemProps"
+          }
+        ],
+        "example": {
+          "id": "user-ID",
+          "name": "John Doe"
+        }
+      },
+      "Customer": {
+        "title": "Customer",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ItemProps"
+          }
+        ],
+        "example": {
+          "id": "customer-ID",
+          "name": "Jane Doe"
+        }
+      },
+      "Currency": {
+        "title": "Currency",
+        "type": "object",
+        "description": "Represents a currency of an amount. Aside from the currency code, it holds the (exchange) rate of this currency at the time of establishing the amount.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "EUR"
+          },
+          "rate": {
+            "type": "number",
+            "format": "float",
+            "example": 1.0
+          }
+        }
+      },
+      "Amount": {
+        "title": "Amount",
+        "type": "object",
+        "properties": {
+          "inclVAT": {
+            "type": "number",
+            "format": "float",
+            "example": 135.95
+          },
+          "exclVAT": {
+            "type": "number",
+            "format": "float",
+            "example": 112.36
+          },
+          "VAT": {
+            "type": "number",
+            "format": "float",
+            "example": 23.59
+          },
+          "priceIncludedVAT": {
+            "type": "boolean",
+            "description": "Price Included VAT. If set to true, signals that the inclVAT is the correct (not rounded) original value and that both VAT and exclVAT are derived values that may have been rounded to the scale of the currency of the corresponding item. If set to false exclVAT is the original correct value and both inclVAT and VAT are derived and, possibly, rounded values.",
+            "example": true
+          }
+        }
+      },
+      "Price": {
+        "title": "Price",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "format": "float",
+            "example": 2.95
+          },
+          "currency": {
+            "type": "string",
+            "example": "EUR"
+          },
+          "inclVAT": {
+            "type": "boolean",
+            "example": true
+          },
+          "VAT": {
+            "$ref": "#/components/schemas/VatTariff"
+          }
+        }
+      },
+      "VatTariff": {
+        "title": "VatTariff",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "4566"
+          },
+          "name": {
+            "type": "string",
+            "example": "LOW"
+          },
+          "percentage": {
+            "type": "number",
+            "format": "float",
+            "example": 9
+          },
+          "code": {
+            "type": "string",
+            "example": "L"
+          }
+        }
+      },
+      "Discount": {
+        "title": "Discount",
+        "type": "object",
+        "description": "Represents a granted discount.",
+        "properties": {
+          "percentage": {
+            "type": "number",
+            "description": "The percentage discount granted",
+            "example": 10
+          },
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "description": "The discount amount granted",
+            "example": 0.0
+          },
+          "type": {
+            "type": "object",
+            "description": "Type of discount (e.g. representation, flawed etc. )",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "type-ID"
+              },
+              "name": {
+                "type": "string",
+                "example": "Representation"
+              },
+              "externalId": {
+                "type": "string",
+                "example": "123-456"
+              }
+            }
+          }
+        }
+      },
+      "SalesItem": {
+        "title": "SalesItem",
+        "type": "object",
+        "description": "Represents a sale.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "item-ID"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Refers to the parent SalesItem if applicable.",
+            "example": "parent-item-ID"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "example": "2021-02-23T14:02:47Z"
+          },
+          "workDay": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Date"
+              }
+            ],
+            "description": "The workday this item belongs to."
+          },
+          "product": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemProps"
+              }
+            ],
+            "example": {
+              "id": "product-ID",
+              "name": "Product name"
+            }
+          },
+          "itemCount": {
+            "type": "number",
+            "format": "float",
+            "description": "Number (quantity) of product items sold. Decimal value with arbitrary but specific scale (precision).",
+            "example": 1
+          },
+          "quantity": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": ""
+              },
+              "name": {
+                "type": "string",
+                "example": ""
+              },
+              "units": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          },
+          "price": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "netAmount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "grossAmount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "remarks": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "example": [
+              "Small portion",
+              "no salt"
+            ]
+          },
+          "discounts": {
+            "type": "object",
+            "properties": {
+              "order": {
+                "type": "number",
+                "format": "float",
+                "example": 0.0
+              },
+              "item": {
+                "type": "number",
+                "format": "float",
+                "example": 0.0
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Discount"
+                }
+              }
+            }
+          },
+          "userShiftId": {
+            "type": "string",
+            "example": "userShiftId"
+          },
+          "salesPoint": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemProps"
+              }
+            ],
+            "example": {
+              "id": "sp-ID",
+              "name": "Table 23"
+            }
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "productGroups": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "example": [
+              "pg-ID",
+              "pg-root-ID"
+            ]
+          },
+          "turnOverGroups": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "example": [
+              "tu-ID",
+              "tu-root-ID"
+            ]
+          }
+        }
+      },
+      "RecyclingDepositItem": {
+        "title": "RecyclingDepositItem",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "item-ID"
+          },
+          "salesItemId": {
+            "type": "string",
+            "example": "item-ID"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "example": "2021-02-23T14:02:47Z"
+          },
+          "workDay": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "packagingProfile": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemProps"
+              }
+            ],
+            "example": {
+              "id": "PET50CL",
+              "name": "PET bottle, 50cl"
+            }
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "inclVatAmount": {
+                "type": "number",
+                "format": "float",
+                "example": 0.45
+              },
+              "exclVatAmount": {
+                "type": "number",
+                "format": "float",
+                "example": 0.45
+              },
+              "vatAmount": {
+                "type": "number",
+                "format": "float",
+                "example": 0
+              },
+              "priceInclVat": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          "itemCount": {
+            "type": "number",
+            "format": "float",
+            "example": 3
+          },
+          "price": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Price"
+              }
+            ],
+            "properties": {
+              "value": {
+                "example": 0.15
+              },
+              "VAT": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VatTariff"
+                  }
+                ],
+                "example": {
+                  "id": "ZERO-VAT",
+                  "name": "ZERO VAT",
+                  "percentage": 0,
+                  "code": "D"
+                }
+              }
+            }
+          },
+          "returned": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "PaymentItem": {
+        "title": "PaymentItem",
+        "type": "object",
+        "description": "Represents a payment for this order. A ClosedOrder can have multiple payments. Each PaymentItem has a Payment. Please note the difference. A Payment represents the act of paying as executed by the customer; it states the payed amount in a specific currency with a specific method (cash, Master card, VISA etc.). The PaymentItem represents the effect the Payment has in the context (currency etc.) of the order.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "item-ID"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTime"
+              }
+            ],
+            "example": "2021-09-22T15:59:25Z"
+          },
+          "workDay": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "$ref": "#/components/schemas/Currency"
+              },
+              "amount": {
+                "type": "number",
+                "format": "float",
+                "example": 64.45
+              },
+              "method": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ItemProps"
+                  }
+                ],
+                "example": {
+                  "id": "VISA",
+                  "name": "Visa card"
+                }
+              },
+              "methodType": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ItemProps"
+                  }
+                ],
+                "example": {
+                  "id": "EFT",
+                  "name": "Electronic fund transfer"
+                }
+              },
+              "journal": {
+                "type": "string",
+                "example": "Vendor-ID: e823749, CardNr: 8erw98w ....."
+              },
+              "externalId": {
+                "type": "string",
+                "example": "some_identifier"
+              },
+              "roundingDifference": {
+                "type": "number",
+                "format": "float",
+                "example": 0.02
+              },
+              "tip": {
+                "type": "number",
+                "format": "float",
+                "example": 2.0
+              }
+            }
+          },
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "example": 64.45
+          },
+          "shiftId": {
+            "type": "string",
+            "description": "Identifier of the CashStoreShift this payment belongs to.",
+            "example": "shift-ID"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          }
+        }
+      },
+      "VATItem": {
+        "title": "VATItem",
+        "type": "object",
+        "description": "Used to represent a VAT total.",
+        "properties": {
+          "tariff": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VatTariff"
+              }
+            ],
+            "example": {
+              "id": "124-56",
+              "name": "HIGH",
+              "percentage": 21.0,
+              "code": "H"
+            }
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount"
+          }
+        }
+      },
+      "Promotion": {
+        "title": "Promotion",
+        "type": "object",
+        "description": "inline promotion object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "item-ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "Feb CombiDeal"
+          },
+          "type": {
+            "type": "string",
+            "example": "CombiDeal"
+          },
+          "effect": {
+            "type": "string",
+            "example": "DiscountAmount"
+          }
+        }
+      },
+      "AppliedPromotion": {
+        "title": "AppliedPromotion",
+        "type": "object",
+        "description": "Represents applied promotion to this order. A ClosedOrder can have multiple applied promotions. Each AppliedPromotion has a Promotion.",
+        "properties": {
+          "promotion": {
+            "$ref": "#/components/schemas/Promotion"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "float",
+            "description": "quantity of promoted items",
+            "example": 1.5
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "resulted discount amount",
+            "example": 10.2
+          },
+          "salesItemIds": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringArray"
+              }
+            ],
+            "description": "Identifiers of sales items affected by this promotion.",
+            "example": [
+              "sales-item-1",
+              "sales-item-2"
+            ]
+          }
+        }
+      },
+      "RewardToken": {
+        "title": "RewardToken",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "token-name"
+          },
+          "appliedPromotions": {
+            "type": "array",
+            "description": "List of inline promotions object",
+            "items": {
+              "$ref": "#/components/schemas/AppliedPromotion"
+            }
+          }
+        }
+      }
+    }
+  }
+}
