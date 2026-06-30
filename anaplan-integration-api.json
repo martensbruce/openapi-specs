@@ -264,7 +264,7 @@
         }
       }
     },
-    "/oauth/authorize": {
+    "/auth/authorize": {
       "get": {
         "tags": ["OAuth2"],
         "summary": "OAuth 2.0 Authorization endpoint",
@@ -2600,7 +2600,7 @@
         "description": "OAuth 2.0 authentication for Anaplan. Supports Authorization Code and Device Authorization Code grant flows. Scopes: openid, profile, email, offline_access.",
         "flows": {
           "authorizationCode": {
-            "authorizationUrl": "https://us1a.app.anaplan.com/oauth/authorize",
+            "authorizationUrl": "https://us1a.app.anaplan.com/auth/authorize",
             "tokenUrl": "https://us1a.app.anaplan.com/oauth/token",
             "refreshUrl": "https://us1a.app.anaplan.com/oauth/token",
             "scopes": {
